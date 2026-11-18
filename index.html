@@ -202,6 +202,46 @@ dialog h2{font-size:20px;font-weight:800}
 .msg{font-size:12.5px;color:var(--bad);min-height:1em;font-weight:600}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:50;box-shadow:var(--shadow)}
 
+/* ---------- form wajib & foto ---------- */
+dialog form{max-height:88vh;overflow-y:auto}
+.dlg-title{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.req{color:var(--bad);font-weight:800}
+.req-note{font-size:12px;color:var(--muted);font-weight:600}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld > .f{display:block;font-size:12.5px;font-weight:600;color:var(--muted)}
+.fld .err{color:var(--bad);font-size:11.5px;font-weight:600;min-height:0}
+.fld .err:empty{display:none}
+.fld.invalid input,.fld.invalid select{border-color:var(--bad);background:#fff6f5}
+.fld.invalid .ph{border-color:var(--bad);background:#fff6f5}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ph{position:relative;display:block;aspect-ratio:4/3;border:2px dashed #cfcfee;border-radius:16px;background:#fafaff;cursor:pointer;overflow:hidden;transition:border-color .15s}
+.ph:hover{border-color:var(--violet)}
+.ph:focus-within{outline:2px solid var(--violet);outline-offset:2px}
+.ph-input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.ph-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ph-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:10px;pointer-events:none}
+.ph-empty svg{width:30px;height:30px;fill:none;stroke:var(--violet);stroke-width:1.6;stroke-linejoin:round}
+.ph-empty b{font-size:12.5px;color:var(--violet)}
+.ph-empty small{font-size:11px;color:var(--muted)}
+.ph.has .ph-empty{display:none}
+.ph-del{align-self:flex-start;border:0;background:transparent;color:var(--violet);font-size:12px;font-weight:700;cursor:pointer;padding:0}
+.opt-sep{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.opt-sep::before,.opt-sep::after{content:"";flex:1;height:1px;background:var(--line)}
+.thumbs{display:flex;gap:4px}
+.thumbs button{width:38px;height:38px;border-radius:10px;border:0;padding:0;overflow:hidden;background:var(--violet-soft);cursor:pointer}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.nofoto{color:#b6b7cf}
+dialog.wide{width:min(980px,calc(100vw - 24px))}
+.foto-wrap{padding:24px;display:flex;flex-direction:column;gap:16px;max-height:90vh;overflow-y:auto}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ba figure{margin:0;display:flex;flex-direction:column;gap:8px}
+.ba-img{aspect-ratio:4/3;border-radius:16px;background:#f1f1fb;overflow:hidden;display:grid;place-items:center;color:var(--muted);font-size:12.5px}
+.ba-img img{width:100%;height:100%;object-fit:contain;background:#111}
+.ri{cursor:pointer}
+.ri:hover{background:#fbfbff}
+.ri .cam{width:14px;height:14px;vertical-align:-2px;margin-left:4px;fill:none;stroke:var(--muted);stroke-width:2}
+@media (max-width:560px){ .ba{grid-template-columns:1fr} .photos{gap:8px} .ph-empty small{display:none} }
+
 @media (prefers-reduced-motion: no-preference){
   .panel{animation:fade .25s ease}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -405,9 +445,9 @@ dialog h2{font-size:20px;font-weight:800}
       </section>
 
       <section class="card panel" id="p-riwayat" hidden>
-        <div class="panel-head"><div><h2>Riwayat servis terbaru</h2><p>20 catatan terakhir.</p></div></div>
+        <div class="panel-head"><div><h2>Riwayat servis terbaru</h2><p>20 catatan terakhir. Klik foto untuk melihat kondisi sebelum dan sesudah servis.</p></div></div>
         <div class="tw"><table>
-          <thead><tr><th>Tanggal</th><th>Nopol</th><th>Uraian</th><th>Jenis</th><th>Bengkel</th><th class="num">Km</th><th class="num">Biaya</th></tr></thead>
+          <thead><tr><th>Tanggal</th><th>Kendaraan</th><th>Uraian</th><th>Jenis</th><th>Bengkel</th><th class="num">Km</th><th class="num">Biaya</th><th>Foto</th></tr></thead>
           <tbody id="tbl-riwayat"></tbody>
         </table></div>
       </section>
@@ -451,27 +491,64 @@ dialog h2{font-size:20px;font-weight:800}
 
 <!-- ============ DIALOG: CATAT SERVIS ============ -->
 <dialog id="d-servis">
-  <form id="f-servis" method="dialog">
-    <h2>Catat servis / perbaikan</h2>
-    <label class="f">Kendaraan<select id="s-nopol" required></select></label>
+  <form id="f-servis" method="dialog" novalidate>
+    <div class="dlg-title"><h2>Catat servis / perbaikan</h2><span class="req-note"><span class="req">*</span> wajib diisi</span></div>
+
+    <div class="fld" data-fld="s-nopol"><label class="f" for="s-nopol">Kendaraan <span class="req">*</span></label><select id="s-nopol" required></select><small class="err"></small></div>
     <div class="row2">
-      <label class="f">Tanggal<input type="date" id="s-tanggal" required></label>
-      <label class="f">Jenis<select id="s-jenis" required><option value="Rutin">Servis rutin</option><option value="Perbaikan">Perbaikan</option></select></label>
+      <div class="fld" data-fld="s-tanggal"><label class="f" for="s-tanggal">Tanggal servis <span class="req">*</span></label><input type="date" id="s-tanggal" required><small class="err"></small></div>
+      <div class="fld" data-fld="s-jenis"><label class="f" for="s-jenis">Jenis <span class="req">*</span></label><select id="s-jenis" required><option value="">— pilih —</option><option value="Rutin">Servis rutin</option><option value="Perbaikan">Perbaikan</option></select><small class="err"></small></div>
     </div>
-    <label class="f">Uraian pekerjaan<input type="text" id="s-uraian" required placeholder="mis. Ganti oli & filter"></label>
-    <label class="f">Bengkel<input type="text" id="s-bengkel" placeholder="mis. Bengkel Resmi Auto2000"></label>
+    <div class="fld" data-fld="s-uraian"><label class="f" for="s-uraian">Uraian pekerjaan <span class="req">*</span></label><input type="text" id="s-uraian" required maxlength="200" placeholder="mis. Ganti oli & filter"><small class="err"></small></div>
+    <div class="fld" data-fld="s-bengkel"><label class="f" for="s-bengkel">Bengkel <span class="req">*</span></label><input type="text" id="s-bengkel" required maxlength="120" placeholder="mis. Bengkel Resmi Auto2000"><small class="err"></small></div>
     <div class="row2">
-      <label class="f">Kilometer<input type="number" id="s-km" min="0" step="1" inputmode="numeric"></label>
-      <label class="f">Biaya (Rp)<input type="number" id="s-biaya" min="0" step="1" required inputmode="numeric"></label>
+      <div class="fld" data-fld="s-km"><label class="f" for="s-km">Kilometer (odometer) <span class="req">*</span></label><input type="number" id="s-km" min="0" step="1" required inputmode="numeric" placeholder="mis. 45210"><small class="err"></small></div>
+      <div class="fld" data-fld="s-biaya"><label class="f" for="s-biaya">Biaya (Rp) <span class="req">*</span></label><input type="number" id="s-biaya" min="0" step="1" required inputmode="numeric" placeholder="mis. 650000"><small class="err"></small></div>
     </div>
-    <label class="f">Jadwal servis berikutnya (opsional)<input type="date" id="s-next"></label>
+
+    <div class="photos">
+      <div class="fld" data-fld="s-foto-sebelum">
+        <span class="f">Foto sebelum servis <span class="req">*</span></span>
+        <label class="ph" for="s-foto-sebelum">
+          <input type="file" id="s-foto-sebelum" accept="image/*" class="ph-input">
+          <img class="ph-img" alt="Pratinjau foto sebelum servis" hidden>
+          <span class="ph-empty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><b>Ambil / pilih foto</b><small>Kondisi kendaraan saat masuk bengkel</small></span>
+        </label>
+        <button type="button" class="ph-del" data-for="s-foto-sebelum" hidden>Ganti foto</button>
+        <small class="err"></small>
+      </div>
+      <div class="fld" data-fld="s-foto-sesudah">
+        <span class="f">Foto sesudah servis <span class="req">*</span></span>
+        <label class="ph" for="s-foto-sesudah">
+          <input type="file" id="s-foto-sesudah" accept="image/*" class="ph-input">
+          <img class="ph-img" alt="Pratinjau foto sesudah servis" hidden>
+          <span class="ph-empty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><b>Ambil / pilih foto</b><small>Kondisi kendaraan setelah selesai</small></span>
+        </label>
+        <button type="button" class="ph-del" data-for="s-foto-sesudah" hidden>Ganti foto</button>
+        <small class="err"></small>
+      </div>
+    </div>
+
+    <div class="opt-sep">Opsional</div>
+    <label class="f">Jadwal servis berikutnya<input type="date" id="s-next"></label>
     <label class="check"><input type="checkbox" id="s-selesai"> Kendaraan sudah selesai diperbaiki (ubah status jadi Siap Pakai)</label>
-    <div class="msg" id="s-msg"></div>
+    <div class="msg" id="s-msg" role="alert"></div>
     <div class="dlg-actions">
       <button class="btn" type="button" data-close>Batal</button>
       <button class="btn primary" type="submit" id="s-btn">Simpan</button>
     </div>
   </form>
+</dialog>
+
+<!-- ============ DIALOG: LIHAT FOTO ============ -->
+<dialog id="d-foto" class="wide">
+  <div class="foto-wrap">
+    <div class="dlg-title"><div><h2 id="fv-title">—</h2><p class="sub" id="fv-sub">—</p></div><button class="btn" type="button" data-close>Tutup</button></div>
+    <div class="ba">
+      <figure><figcaption><span class="pill warn">Sebelum</span></figcaption><div class="ba-img" id="fv-sebelum"></div></figure>
+      <figure><figcaption><span class="pill ok">Sesudah</span></figcaption><div class="ba-img" id="fv-sesudah"></div></figure>
+    </div>
+  </div>
 </dialog>
 
 <!-- ============ DIALOG: UPDATE KENDARAAN ============ -->
@@ -712,14 +789,27 @@ dialog h2{font-size:20px;font-weight:800}
   function renderRiwayat(s) {
     const el = $('tbl-riwayat'); clear(el);
     const rows = terbaru(s).slice(0, 20);
-    if (!rows.length) return emptyRow(el, 7, 'Belum ada catatan servis.');
+    if (!rows.length) return emptyRow(el, 8, 'Belum ada catatan servis.');
     for (const r of rows) {
       const tr = document.createElement('tr');
-      td(tr, tgl(parse(r.tanggal))); td(tr, r.nopol); td(tr, r.uraian);
+      td(tr, tgl(parse(r.tanggal))); veh(tr, r.nopol, kendaraanOf(r.nopol)); td(tr, r.uraian);
       pill(tr, r.jenis, r.jenis === 'Rutin' ? '' : 'warn');
       td(tr, r.bengkel); td(tr, r.km == null ? '' : int(r.km), 'num'); td(tr, rp(r.biaya), 'num');
+      const c = document.createElement('td');
+      if (r.foto_sebelum || r.foto_sesudah) {
+        const box = document.createElement('div'); box.className = 'thumbs';
+        for (const [p, lbl] of [[r.foto_sebelum, 'sebelum'], [r.foto_sesudah, 'sesudah']]) {
+          if (!p) continue;
+          const b = document.createElement('button'); b.type = 'button'; b.title = 'Foto ' + lbl;
+          const im = document.createElement('img'); im.alt = 'Foto ' + lbl + ' servis ' + r.nopol; im.dataset.path = p; im.loading = 'lazy';
+          b.appendChild(im); b.addEventListener('click', () => openFoto(r)); box.appendChild(b);
+        }
+        c.appendChild(box);
+      } else { c.className = 'nofoto'; c.textContent = '—'; }
+      tr.appendChild(c);
       el.appendChild(tr);
     }
+    fillPhotoSrc(el);
   }
 
   function renderRecent(s) {
@@ -734,9 +824,133 @@ dialog h2{font-size:20px;font-weight:800}
       const sp = document.createElement('span'); sp.textContent = r.nopol + ' · ' + tgl(parse(r.tanggal));
       t.append(b, sp);
       const c = document.createElement('span'); c.className = 'c'; c.textContent = rpJt(r.biaya);
+      if (r.foto_sebelum || r.foto_sesudah) {
+        b.insertAdjacentHTML('beforeend', '<svg class="cam" viewBox="0 0 24 24" aria-label="ada foto"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>');
+      }
+      it.tabIndex = 0; it.setAttribute('role', 'button');
+      it.addEventListener('click', () => openFoto(r));
+      it.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFoto(r); } });
       it.append(ic, t, c); el.appendChild(it);
     }
   }
+
+  // ---------- Foto (Supabase Storage) ----------
+  const BUCKET = 'foto-servis';
+  const FOTO_WAJIB = true; // ubah ke false jika foto boleh dikosongkan
+  const urlCache = new Map(); // path -> {url, exp}
+  const kendaraanOf = (nopol) => { const k = DATA && DATA.kendaraan.find((x) => x.nopol === nopol); return k ? k.merek_tipe : ''; };
+
+  async function signedUrls(paths) {
+    const nowMs = Date.now();
+    const need = [...new Set(paths.filter((p) => p && !(urlCache.has(p) && urlCache.get(p).exp > nowMs)))];
+    if (need.length) {
+      const {data, error} = await sb.storage.from(BUCKET).createSignedUrls(need, 3600);
+      if (!error && data) data.forEach((d) => { if (d.signedUrl) urlCache.set(d.path, {url: d.signedUrl, exp: nowMs + 55 * 60 * 1000}); });
+    }
+    const out = {}; paths.forEach((p) => { if (p && urlCache.has(p)) out[p] = urlCache.get(p).url; });
+    return out;
+  }
+
+  async function fillPhotoSrc(root) {
+    const imgs = [...root.querySelectorAll('img[data-path]')];
+    if (!imgs.length) return;
+    try {
+      const urls = await signedUrls(imgs.map((i) => i.dataset.path));
+      imgs.forEach((i) => { if (urls[i.dataset.path]) i.src = urls[i.dataset.path]; });
+    } catch (e) { /* foto gagal dimuat: biarkan kotak kosong */ }
+  }
+
+  async function openFoto(r) {
+    setText('fv-title', r.uraian + ' · ' + r.nopol);
+    setText('fv-sub', tgl(parse(r.tanggal)) + ' · ' + (r.bengkel || '') + ' · ' + rp(r.biaya));
+    const slots = [['fv-sebelum', r.foto_sebelum], ['fv-sesudah', r.foto_sesudah]];
+    slots.forEach(([id, p]) => { const el = $(id); clear(el); el.textContent = p ? 'Memuat foto…' : 'Tidak ada foto'; });
+    $('d-foto').showModal();
+    const urls = await signedUrls(slots.map((x) => x[1]).filter(Boolean)).catch(() => ({}));
+    slots.forEach(([id, p]) => {
+      if (!p) return;
+      const el = $(id); clear(el);
+      if (!urls[p]) { el.textContent = 'Foto tidak dapat dimuat'; return; }
+      const a = document.createElement('a'); a.href = urls[p]; a.target = '_blank'; a.rel = 'noopener'; a.style.display = 'contents';
+      const im = document.createElement('img'); im.src = urls[p]; im.alt = 'Foto servis ' + r.nopol;
+      a.appendChild(im); el.appendChild(a);
+    });
+  }
+
+  // Perkecil foto sebelum diunggah (maks 1600 px, JPEG) agar hemat kuota dan cepat
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      if (!file || !/^image\//.test(file.type)) return reject(new Error('File harus berupa gambar (JPG/PNG).'));
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const max = 1600, sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+        const cv = document.createElement('canvas');
+        cv.width = Math.round(img.naturalWidth * sc); cv.height = Math.round(img.naturalHeight * sc);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob((b) => b ? resolve(b) : reject(new Error('Foto gagal diproses.')), 'image/jpeg', 0.82);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Format foto tidak didukung. Gunakan JPG atau PNG.')); };
+      img.src = url;
+    });
+  }
+
+  const PHOTO = {'s-foto-sebelum': null, 's-foto-sesudah': null}; // blob hasil kompres
+  function setPhoto(id, blob) {
+    PHOTO[id] = blob;
+    const inp = $(id), lab = inp.closest('.ph'), im = lab.querySelector('.ph-img'), del = document.querySelector('.ph-del[data-for="' + id + '"]');
+    if (im.src && im.src.startsWith('blob:')) URL.revokeObjectURL(im.src);
+    if (blob) { im.src = URL.createObjectURL(blob); im.hidden = false; lab.classList.add('has'); del.hidden = false; }
+    else { im.removeAttribute('src'); im.hidden = true; lab.classList.remove('has'); del.hidden = true; inp.value = ''; }
+  }
+  Object.keys(PHOTO).forEach((id) => {
+    $(id).addEventListener('change', async () => {
+      const f = $(id).files[0]; if (!f) return;
+      setFieldError(id, '');
+      try { setPhoto(id, await compressImage(f)); }
+      catch (e) { setPhoto(id, null); setFieldError(id, e.message); }
+    });
+  });
+  document.querySelectorAll('.ph-del').forEach((b) => b.addEventListener('click', () => { setPhoto(b.dataset.for, null); $(b.dataset.for).click(); }));
+
+  function setFieldError(id, msg) {
+    const f = document.querySelector('.fld[data-fld="' + id + '"]'); if (!f) return;
+    f.classList.toggle('invalid', !!msg); f.querySelector('.err').textContent = msg || '';
+    if (!msg && !document.querySelector('#f-servis .fld.invalid') && /kolom wajib/.test($('s-msg').textContent)) $('s-msg').textContent = '';
+  }
+  document.querySelectorAll('#f-servis .fld input:not([type=file]), #f-servis .fld select').forEach((el) => {
+    el.addEventListener('input', () => setFieldError(el.id, ''));
+    el.addEventListener('change', () => setFieldError(el.id, ''));
+  });
+
+  function validateServis() {
+    const errs = {};
+    const v = (id) => $(id).value.trim();
+    if (!v('s-nopol')) errs['s-nopol'] = 'Pilih kendaraan.';
+    if (!v('s-tanggal')) errs['s-tanggal'] = 'Isi tanggal servis.';
+    else if (v('s-tanggal') > TODAY_STR) errs['s-tanggal'] = 'Tanggal servis tidak boleh di masa depan.';
+    if (!v('s-jenis')) errs['s-jenis'] = 'Pilih jenis servis.';
+    if (!v('s-uraian')) errs['s-uraian'] = 'Tulis pekerjaan yang dilakukan.';
+    else if (v('s-uraian').length < 3) errs['s-uraian'] = 'Uraian terlalu pendek.';
+    if (!v('s-bengkel')) errs['s-bengkel'] = 'Isi nama bengkel.';
+    if (v('s-km') === '') errs['s-km'] = 'Isi angka kilometer.';
+    else if (!(Number(v('s-km')) >= 0) || !Number.isInteger(Number(v('s-km')))) errs['s-km'] = 'Kilometer harus angka bulat.';
+    if (v('s-biaya') === '') errs['s-biaya'] = 'Isi biaya (tulis 0 jika gratis).';
+    else if (!(Number(v('s-biaya')) >= 0) || !Number.isInteger(Number(v('s-biaya')))) errs['s-biaya'] = 'Biaya harus angka bulat tanpa titik.';
+    if (FOTO_WAJIB && !PHOTO['s-foto-sebelum']) errs['s-foto-sebelum'] = 'Tambahkan foto sebelum servis.';
+    if (FOTO_WAJIB && !PHOTO['s-foto-sesudah']) errs['s-foto-sesudah'] = 'Tambahkan foto sesudah servis.';
+    document.querySelectorAll('#f-servis .fld').forEach((f) => setFieldError(f.dataset.fld, errs[f.dataset.fld] || ''));
+    const first = Object.keys(errs)[0];
+    if (first) {
+      const fld = document.querySelector('.fld[data-fld="' + first + '"]');
+      fld.scrollIntoView({block: 'center', behavior: 'smooth'});
+      const ctl = $(first); if (ctl && ctl.type !== 'file') ctl.focus({preventScroll: true});
+    }
+    return Object.keys(errs).length;
+  }
+
+  const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   // ---------- Calendar ----------
   let calY = YEAR, calM = MONTH, calSel = null, calItems = [];
@@ -890,24 +1104,45 @@ dialog h2{font-size:20px;font-weight:800}
   function openServis() {
     if (!DATA || !DATA.kendaraan.length) return toast('Belum ada data kendaraan.');
     $('f-servis').reset();
-    $('s-tanggal').value = TODAY_STR;
+    Object.keys(PHOTO).forEach((id) => setPhoto(id, null));
+    document.querySelectorAll('#f-servis .fld').forEach((f) => setFieldError(f.dataset.fld, ''));
+    $('s-tanggal').value = TODAY_STR; $('s-tanggal').max = TODAY_STR;
     $('s-msg').textContent = '';
     $('d-servis').showModal();
   }
 
   $('f-servis').addEventListener('submit', async (ev) => {
     ev.preventDefault();
+    $('s-msg').textContent = '';
+    const nErr = validateServis();
+    if (nErr) { $('s-msg').textContent = nErr + ' kolom wajib belum benar. Periksa yang bertanda merah.'; return; }
     const nopol = $('s-nopol').value;
     const row = {
       tanggal: $('s-tanggal').value, nopol, jenis: $('s-jenis').value,
-      uraian: $('s-uraian').value.trim(), bengkel: $('s-bengkel').value.trim() || null,
-      km: $('s-km').value === '' ? null : Number($('s-km').value), biaya: Number($('s-biaya').value)
+      uraian: $('s-uraian').value.trim(), bengkel: $('s-bengkel').value.trim(),
+      km: Number($('s-km').value), biaya: Number($('s-biaya').value)
     };
-    if (!row.uraian) { $('s-msg').textContent = 'Uraian pekerjaan wajib diisi.'; return; }
-    $('s-btn').disabled = true; $('s-msg').textContent = '';
+    const btn = $('s-btn'); const label = btn.textContent;
+    btn.disabled = true;
+    const uploaded = [];
     try {
+      // 1) unggah foto
+      const stamp = Date.now();
+      const items = [['foto_sebelum', 's-foto-sebelum', 'sebelum'], ['foto_sesudah', 's-foto-sesudah', 'sesudah']].filter(([, id]) => PHOTO[id]);
+      for (let i = 0; i < items.length; i++) {
+        const [col, id, tag] = items[i];
+        btn.textContent = 'Mengunggah foto ' + (i + 1) + '/' + items.length + '…';
+        const path = slug(nopol) + '/' + row.tanggal + '-' + stamp + '-' + tag + '.jpg';
+        const {error} = await sb.storage.from(BUCKET).upload(path, PHOTO[id], {contentType: 'image/jpeg', upsert: false});
+        if (error) throw new Error('Foto ' + tag + ' gagal diunggah: ' + errText(error));
+        uploaded.push(path); row[col] = path;
+      }
+      // 2) simpan catatan servis
+      btn.textContent = 'Menyimpan…';
       const {error} = await sb.from('servis').insert(row);
       if (error) throw error;
+      uploaded.length = 0; // sudah tersimpan, jangan dihapus
+      // 3) perbarui data kendaraan bila diminta
       const upd = {};
       if ($('s-next').value) upd.servis_berikutnya = $('s-next').value;
       if ($('s-selesai').checked) upd.status = 'Siap Pakai';
@@ -918,8 +1153,10 @@ dialog h2{font-size:20px;font-weight:800}
       $('d-servis').close();
       toast('Catatan servis ' + nopol + ' tersimpan');
       await loadData();
-    } catch (e) { $('s-msg').textContent = errText(e); }
-    finally { $('s-btn').disabled = false; }
+    } catch (e) {
+      $('s-msg').textContent = errText(e);
+      if (uploaded.length) sb.storage.from(BUCKET).remove(uploaded).catch(() => {}); // bersihkan foto yatim
+    } finally { btn.disabled = false; btn.textContent = label; }
   });
 
   function fillKendaraanForm(nopol) {
