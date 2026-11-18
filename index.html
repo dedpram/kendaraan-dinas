@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Pemeliharaan Kendaraan Dinas</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+:root{
+  --bg:#f7f7f5;--panel:#ffffff;--fg:#1f1f1d;--muted:#6b6a66;--line:#e4e2dc;
+  --ok:#2f7d4f;--warn:#b7791f;--bad:#c0392b;--accent:#3b6fb6;
+  --c0:#3b6fb6;--c1:#e08a3c;--track:#d9d7d0;--grid:#ecebe6;
+  --radius:10px;--shadow:0 6px 20px rgba(0,0,0,.08);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --serif:Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#1b1b1a;--panel:#242422;--fg:#ecebe6;--muted:#a3a19b;--line:#3a3936;--accent:#6c9be0;
+    --ok:#5cbf83;--warn:#e0a84a;--bad:#ef6f61;--c0:#6c9be0;--c1:#f0a462;--track:#3d3c39;--grid:#302f2d;--shadow:0 6px 20px rgba(0,0,0,.4)}
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.45}
+.wrap{max-width:1200px;margin:0 auto;padding:20px 20px 48px;display:flex;flex-direction:column;gap:30px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.topbar .actions{display:flex;gap:8px;flex-wrap:wrap}
+h1{font-family:var(--serif);font-weight:400;font-size:2rem;margin:0}
+.lede{margin:8px 0 0;color:var(--muted);max-width:70ch}
+.lede b{color:var(--fg);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:4px}
+.card h3,section h2{margin:0;font-size:15px;font-weight:600}
+.win,.sub,.note{font-size:12.5px;color:var(--muted)}
+.note{margin:0}
+.big{font-family:var(--serif);font-size:2rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.sub{font-variant-numeric:tabular-nums}
+.up{color:var(--bad)}.down{color:var(--ok)}
+section{display:flex;flex-direction:column;gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:30px}
+.chart{position:relative;min-height:80px;width:100%}
+#ch-bulanan{min-height:260px}
+.chart svg{display:block;overflow:visible}
+.chart text{font-family:var(--sans)}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:8px;padding:6px 10px;font-size:12.5px;white-space:nowrap;z-index:5;font-variant-numeric:tabular-nums}
+.tip .m{color:var(--muted)}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.tw{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;color:var(--muted);padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tr.click{cursor:pointer}
+tr.click:hover td{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.num{text-align:right}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;border:1px solid var(--line)}
+.pill.bad{color:var(--bad);border-color:var(--bad)}
+.pill.warn{color:var(--warn);border-color:var(--warn)}
+.pill.ok{color:var(--ok);border-color:var(--ok)}
+.empty{color:var(--muted);font-size:13px}
+.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+select,input,textarea{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+.filters select{width:auto;padding:6px 10px}
+button{font:inherit;border-radius:8px;padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.6;cursor:default}
+footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.alert{background:var(--panel);border:1px solid var(--bad);color:var(--bad);border-radius:var(--radius);padding:12px 14px;font-size:13.5px}
+/* login */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px;display:flex;flex-direction:column;gap:12px}
+.login h1{font-size:1.5rem}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.check{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--fg)}
+.check input{width:auto}
+/* dialog */
+dialog{border:1px solid var(--line);border-radius:14px;padding:0;background:var(--panel);color:var(--fg);width:min(520px,calc(100vw - 24px));box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog form{padding:22px;display:flex;flex-direction:column;gap:12px}
+dialog h2{margin:0;font-size:18px;font-weight:600}
+.dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:13.5px;z-index:50;box-shadow:var(--shadow)}
+.msg{font-size:13px;color:var(--bad);min-height:1em}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="login" id="v-login" hidden>
+  <form id="f-login">
+    <h1>Pemeliharaan Kendaraan Dinas</h1>
+    <p class="note">Masuk dengan akun yang diberikan admin.</p>
+    <label class="f">Email<input type="email" id="l-email" required autocomplete="username"></label>
+    <label class="f">Password<input type="password" id="l-pass" required autocomplete="current-password"></label>
+    <div class="msg" id="l-msg"></div>
+    <button class="primary" type="submit" id="l-btn">Masuk</button>
+  </form>
+</div>
+
+<!-- ============ CONFIG ERROR ============ -->
+<div class="wrap" id="v-config" hidden>
+  <div class="alert">Konfigurasi Supabase belum diisi. Buka file <b>config.js</b>, isi <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code>, lalu muat ulang halaman ini.</div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="wrap" id="v-app" hidden>
+  <div class="topbar">
+    <span>Masuk sebagai <b id="u-email">—</b></span>
+    <div class="actions">
+      <button class="primary" id="b-servis">＋ Catat servis</button>
+      <button id="b-kendaraan">Update kendaraan</button>
+      <button id="b-refresh" title="Muat ulang data">↻ Muat ulang</button>
+      <button id="b-logout">Keluar</button>
+    </div>
+  </div>
+
+  <header>
+    <h1>Pemeliharaan Kendaraan Dinas</h1>
+    <p class="lede"><b id="t-siap">—</b> dari <b id="t-total">—</b> kendaraan siap pakai. Ada <b id="t-tempo">—</b> kewajiban (pajak, STNK, servis) yang jatuh tempo dalam 30 hari, dan biaya pemeliharaan bulan ini <b id="t-arah">—</b> dibanding bulan lalu.</p>
+  </header>
+
+  <div class="alert" id="app-error" hidden></div>
+
+  <div class="filters">
+    <label for="f-unit">Unit kerja:</label>
+    <select id="f-unit"><option value="">Semua unit kerja</option></select>
+  </div>
+
+  <section class="kpis">
+    <div class="card">
+      <h3>Kendaraan siap pakai</h3>
+      <span class="win">Kondisi saat ini</span>
+      <div class="big"><span id="k-siap">—</span> <span class="sub">dari <span id="k-total">—</span></span></div>
+      <div class="sub"><span id="k-perbaikan">—</span> unit sedang dalam perbaikan</div>
+    </div>
+    <div class="card">
+      <h3>Biaya pemeliharaan</h3>
+      <span class="win">Bulan berjalan</span>
+      <div class="big" id="k-biaya">—</div>
+      <div class="sub"><span id="k-ubah">—</span> vs bulan lalu (<span id="k-lalu">—</span>)</div>
+    </div>
+    <div class="card">
+      <h3>Serapan anggaran pemeliharaan</h3>
+      <span class="win">Tahun anggaran berjalan</span>
+      <div class="big" id="k-serapan">—</div>
+      <div class="sub"><span id="k-realisasi">—</span> dari pagu <span id="k-pagu">—</span></div>
+    </div>
+    <div class="card">
+      <h3>Jatuh tempo ≤ 30 hari</h3>
+      <span class="win">Pajak, STNK dan servis berkala</span>
+      <div class="big" id="k-tempo">—</div>
+      <div class="sub"><span id="k-telat">—</span> sudah lewat tanggal</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Perlu ditindaklanjuti: jatuh tempo dalam 30 hari</h2>
+    <p class="note">Diurutkan dari yang paling mendesak. Merah = sudah lewat, kuning = 7 hari atau kurang. Klik baris untuk memperbarui tanggal.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Nopol</th><th>Kendaraan</th><th>Unit kerja</th><th>Kewajiban</th><th>Tanggal</th><th class="num">Sisa hari</th><th>Status</th></tr></thead>
+      <tbody id="tbl-tempo"></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Biaya pemeliharaan per bulan</h2>
+    <div class="legend"><span><span class="sw" style="background:var(--c0)"></span>Servis rutin</span><span><span class="sw" style="background:var(--c1)"></span>Perbaikan</span></div>
+    <div class="chart" id="ch-bulanan"></div>
+  </section>
+
+  <div class="grid2">
+    <section>
+      <h2>Total biaya per kendaraan, tahun berjalan</h2>
+      <p class="note">Kendaraan di urutan atas paling banyak menyerap biaya; kandidat evaluasi atau usulan penghapusan.</p>
+      <div class="chart" id="ch-kendaraan"></div>
+    </section>
+    <section>
+      <h2>Serapan anggaran per unit kerja</h2>
+      <p class="note">Batang abu-abu = pagu; isian = realisasi. Merah jika melebihi pagu.</p>
+      <div class="chart" id="ch-serapan"></div>
+    </section>
+  </div>
+
+  <section>
+    <h2>Daftar armada</h2>
+    <p class="note">Klik baris untuk mengubah status, kondisi, atau tanggal jatuh tempo.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Nopol</th><th>Jenis</th><th>Merek / tipe</th><th class="num">Tahun</th><th>Unit kerja</th><th>Kondisi</th><th>Status</th></tr></thead>
+      <tbody id="tbl-armada"></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Riwayat servis terbaru</h2>
+    <p class="note">10 catatan terakhir.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Tanggal</th><th>Nopol</th><th>Uraian</th><th>Jenis</th><th>Bengkel</th><th class="num">Biaya</th></tr></thead>
+      <tbody id="tbl-riwayat"></tbody>
+    </table></div>
+  </section>
+
+  <footer>Data dari Supabase, dimuat <span id="dimuat">—</span>. Perhitungan jatuh tempo memakai tanggal hari ini.</footer>
+</div>
+
+<!-- ============ DIALOG: CATAT SERVIS ============ -->
+<dialog id="d-servis">
+  <form id="f-servis" method="dialog">
+    <h2>Catat servis / perbaikan</h2>
+    <label class="f">Kendaraan<select id="s-nopol" required></select></label>
+    <div class="row2">
+      <label class="f">Tanggal<input type="date" id="s-tanggal" required></label>
+      <label class="f">Jenis<select id="s-jenis" required><option value="Rutin">Servis rutin</option><option value="Perbaikan">Perbaikan</option></select></label>
+    </div>
+    <label class="f">Uraian pekerjaan<input type="text" id="s-uraian" required placeholder="mis. Ganti oli & filter"></label>
+    <label class="f">Bengkel<input type="text" id="s-bengkel" placeholder="mis. Bengkel Resmi Auto2000"></label>
+    <div class="row2">
+      <label class="f">Kilometer<input type="number" id="s-km" min="0" step="1" inputmode="numeric"></label>
+      <label class="f">Biaya (Rp)<input type="number" id="s-biaya" min="0" step="1" required inputmode="numeric"></label>
+    </div>
+    <label class="f">Jadwal servis berikutnya (opsional)<input type="date" id="s-next"></label>
+    <label class="check"><input type="checkbox" id="s-selesai"> Kendaraan sudah selesai diperbaiki (ubah status jadi Siap Pakai)</label>
+    <div class="msg" id="s-msg"></div>
+    <div class="dlg-actions">
+      <button type="button" data-close>Batal</button>
+      <button class="primary" type="submit" id="s-btn">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ DIALOG: UPDATE KENDARAAN ============ -->
+<dialog id="d-kendaraan">
+  <form id="f-kendaraan" method="dialog">
+    <h2>Update kendaraan</h2>
+    <label class="f">Kendaraan<select id="k-nopol" required></select></label>
+    <div class="row2">
+      <label class="f">Status<select id="k-status"><option>Siap Pakai</option><option>Dalam Perbaikan</option></select></label>
+      <label class="f">Kondisi<select id="k-kondisi"><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select></label>
+    </div>
+    <div class="row2">
+      <label class="f">Pajak tahunan<input type="date" id="k-pajak"></label>
+      <label class="f">STNK 5 tahunan<input type="date" id="k-stnk"></label>
+    </div>
+    <label class="f">Servis berikutnya<input type="date" id="k-next"></label>
+    <div class="msg" id="k-msg"></div>
+    <div class="dlg-actions">
+      <button type="button" data-close>Batal</button>
+      <button class="primary" type="submit" id="k-btn">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- Supabase ----------
+  const URL_OK = window.SUPABASE_URL && /^https:\/\//.test(window.SUPABASE_URL);
+  const KEY_OK = window.SUPABASE_ANON_KEY && !/^ISI_/.test(window.SUPABASE_ANON_KEY);
+  if (!URL_OK || !KEY_OK || !window.supabase) { $('v-config').hidden = false; return; }
+  const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+  // ---------- Formatting ----------
+  const loc = d3.formatLocale({decimal: ',', thousands: '.', grouping: [3], currency: ['Rp ', '']});
+  const rp = loc.format('$,.0f'), n1 = loc.format(',.1f'), int = loc.format(',d');
+  const pct = (v) => n1(v) + '%';
+  const rpJt = (v) => 'Rp ' + n1(v / 1e6) + ' jt';
+  const BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const parse = (s) => new Date(s + 'T00:00:00Z');
+  const tgl = (d) => String(d.getUTCDate()).padStart(2, '0') + ' ' + BULAN[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+  const now = new Date();
+  const TODAY = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const TODAY_STR = new Date(TODAY).toISOString().slice(0, 10);
+  const YEAR = now.getFullYear(), MONTH = now.getMonth();
+  const ym = (y, m) => y + '-' + String(m + 1).padStart(2, '0');
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const setText = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+  const clear = (el) => { while (el.firstChild) el.removeChild(el.firstChild); };
+  const daysTo = (s) => s ? Math.round((Date.parse(s + 'T00:00:00Z') - TODAY) / 864e5) : null;
+  const KEW = {pajak_tahunan: 'Pajak tahunan', stnk_5tahunan: 'STNK 5 tahunan', servis_berikutnya: 'Servis berkala'};
+  const errText = (e) => {
+    const m = (e && (e.message || e.error_description)) || String(e);
+    if (/Invalid login credentials/i.test(m)) return 'Email atau password salah.';
+    if (/Failed to fetch|NetworkError/i.test(m)) return 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
+    if (/permission denied|row-level security/i.test(m)) return 'Akun Anda tidak memiliki izin untuk tindakan ini.';
+    return m;
+  };
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 3000); }
+
+  let DATA = null;
+
+  // ---------- Load data ----------
+  async function fetchAll(table, build) {
+    const size = 1000; let from = 0, out = [];
+    for (;;) {
+      const {data, error} = await build(sb.from(table).select('*')).range(from, from + size - 1);
+      if (error) throw error;
+      out = out.concat(data);
+      if (data.length < size) return out;
+      from += size;
+    }
+  }
+
+  async function loadData() {
+    $('app-error').hidden = true;
+    try {
+      const sejak = (YEAR - 1) + '-12-01'; // cukup untuk tahun berjalan + pembanding bulan lalu
+      const [kendaraan, servis, anggaran] = await Promise.all([
+        fetchAll('kendaraan', (q) => q.order('nopol')),
+        fetchAll('servis', (q) => q.gte('tanggal', sejak).order('tanggal', {ascending: false}).order('id', {ascending: false})),
+        fetchAll('anggaran', (q) => q.eq('tahun', YEAR))
+      ]);
+      DATA = {kendaraan, servis, anggaran};
+      fillUnitFilter();
+      fillVehicleSelects();
+      render();
+      setText('dimuat', new Date().toLocaleString('id-ID', {dateStyle: 'medium', timeStyle: 'short'}));
+    } catch (e) {
+      const el = $('app-error'); el.textContent = 'Gagal memuat data: ' + errText(e); el.hidden = false;
+    }
+  }
+
+  function fillUnitFilter() {
+    const sel = $('f-unit'); const cur = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    [...new Set(DATA.kendaraan.map((r) => r.unit_kerja))].sort().forEach((u) => sel.appendChild(new Option(u, u)));
+    sel.value = [...sel.options].some((o) => o.value === cur) ? cur : '';
+  }
+
+  function fillVehicleSelects() {
+    for (const id of ['s-nopol', 'k-nopol']) {
+      const sel = $(id); const cur = sel.value; clear(sel);
+      DATA.kendaraan.forEach((k) => sel.appendChild(new Option(k.nopol + ' · ' + (k.merek_tipe || '') + ' (' + k.unit_kerja + ')', k.nopol)));
+      if (cur) sel.value = cur;
+    }
+  }
+
+  // ---------- Calculations ----------
+  function filtered(unit) {
+    return {
+      k: DATA.kendaraan.filter((r) => !unit || r.unit_kerja === unit),
+      s: DATA.servis.filter((r) => !unit || r.unit_kerja === unit),
+      a: DATA.anggaran.filter((r) => !unit || r.unit_kerja === unit)
+    };
+  }
+
+  function jatuhTempo(k) {
+    const out = [];
+    for (const r of k) for (const f of Object.keys(KEW)) {
+      const d = daysTo(r[f]);
+      if (d !== null && d <= 30) out.push({nopol: r.nopol, merek: r.merek_tipe, unit: r.unit_kerja, kew: KEW[f], field: f, tanggal: r[f], sisa: d});
+    }
+    return out.sort((a, b) => a.sisa - b.sisa);
+  }
+
+  function ringkasan({k, s, a}) {
+    const sumMonth = (p) => s.filter((r) => r.tanggal.slice(0, 7) === p).reduce((x, r) => x + Number(r.biaya), 0);
+    const bIni = sumMonth(ym(YEAR, MONTH));
+    const bLalu = sumMonth(MONTH === 0 ? ym(YEAR - 1, 11) : ym(YEAR, MONTH - 1));
+    const realisasi = s.filter((r) => r.tanggal.slice(0, 4) === String(YEAR)).reduce((x, r) => x + Number(r.biaya), 0);
+    const pagu = a.reduce((x, r) => x + Number(r.pagu), 0);
+    const tempo = jatuhTempo(k);
+    return {
+      total: k.length,
+      siap: k.filter((r) => r.status === 'Siap Pakai').length,
+      perbaikan: k.filter((r) => r.status === 'Dalam Perbaikan').length,
+      bIni, bLalu, ubah: bLalu ? (bIni - bLalu) / bLalu * 100 : null,
+      realisasi, pagu, serapan: pagu ? realisasi / pagu * 100 : null,
+      tempo: tempo.length, telat: tempo.filter((r) => r.sisa < 0).length
+    };
+  }
+
+  function biayaBulanan(s) {
+    const map = new Map();
+    for (const r of s) {
+      if (r.tanggal.slice(0, 4) !== String(YEAR)) continue;
+      const b = r.tanggal.slice(0, 7);
+      if (!map.has(b)) map.set(b, {bulan: b, rutin: 0, perbaikan: 0, total: 0});
+      const o = map.get(b);
+      if (r.jenis === 'Rutin') o.rutin += Number(r.biaya); else o.perbaikan += Number(r.biaya);
+      o.total += Number(r.biaya);
+    }
+    return [...map.values()].sort((a, b) => a.bulan.localeCompare(b.bulan));
+  }
+
+  function biayaKendaraan(k, s) {
+    return k.map((v) => {
+      const rs = s.filter((r) => r.nopol === v.nopol && r.tanggal.slice(0, 4) === String(YEAR));
+      return {nopol: v.nopol, merek: v.merek_tipe, total: rs.reduce((x, r) => x + Number(r.biaya), 0), n: rs.length};
+    }).sort((a, b) => b.total - a.total);
+  }
+
+  function serapanUnit(a, s) {
+    return a.map((r) => {
+      const real = s.filter((x) => x.unit_kerja === r.unit_kerja && x.tanggal.slice(0, 4) === String(YEAR)).reduce((t, x) => t + Number(x.biaya), 0);
+      return {unit: r.unit_kerja, pagu: Number(r.pagu), real, persen: Number(r.pagu) ? real / Number(r.pagu) * 100 : 0};
+    }).sort((a, b) => b.persen - a.persen);
+  }
+
+  // ---------- Rendering: text & tables ----------
+  function renderKpi(r) {
+    setText('t-siap', int(r.siap)); setText('t-total', int(r.total)); setText('t-tempo', int(r.tempo));
+    setText('t-arah', r.ubah == null ? 'tidak dapat dibandingkan' : (r.ubah >= 0 ? 'naik ' : 'turun ') + pct(Math.abs(r.ubah)));
+    setText('k-siap', int(r.siap)); setText('k-total', int(r.total)); setText('k-perbaikan', int(r.perbaikan));
+    setText('k-biaya', rp(r.bIni)); setText('k-lalu', rp(r.bLalu));
+    const u = $('k-ubah'); u.classList.remove('up', 'down');
+    if (r.ubah == null) u.textContent = '—';
+    else { u.textContent = (r.ubah >= 0 ? '▲ ' : '▼ ') + pct(Math.abs(r.ubah)); u.classList.add(r.ubah > 0 ? 'up' : 'down'); }
+    setText('k-serapan', r.serapan == null ? '—' : pct(r.serapan));
+    setText('k-realisasi', rp(r.realisasi)); setText('k-pagu', rp(r.pagu));
+    setText('k-tempo', int(r.tempo)); setText('k-telat', int(r.telat));
+  }
+
+  const td = (tr, text, cls) => { const c = document.createElement('td'); c.textContent = text == null ? '' : text; if (cls) c.className = cls; tr.appendChild(c); };
+  const pill = (tr, text, cls) => { const c = document.createElement('td'); const s = document.createElement('span'); s.className = 'pill ' + (cls || ''); s.textContent = text; c.appendChild(s); tr.appendChild(c); };
+  const emptyRow = (el, cols, text) => { const tr = document.createElement('tr'); const c = document.createElement('td'); c.colSpan = cols; c.className = 'empty'; c.textContent = text; tr.appendChild(c); el.appendChild(tr); };
+
+  function renderTempo(rows) {
+    const el = $('tbl-tempo'); clear(el);
+    if (!rows.length) return emptyRow(el, 7, 'Tidak ada kewajiban yang jatuh tempo dalam 30 hari.');
+    for (const r of rows) {
+      const tr = document.createElement('tr'); tr.className = 'click';
+      tr.addEventListener('click', () => openKendaraan(r.nopol));
+      td(tr, r.nopol); td(tr, r.merek); td(tr, r.unit); td(tr, r.kew); td(tr, tgl(parse(r.tanggal))); td(tr, String(r.sisa), 'num');
+      if (r.sisa < 0) pill(tr, 'Terlambat ' + (-r.sisa) + ' hari', 'bad');
+      else if (r.sisa <= 7) pill(tr, 'Segera', 'warn');
+      else pill(tr, 'Terjadwal');
+      el.appendChild(tr);
+    }
+  }
+
+  function renderArmada(k) {
+    const el = $('tbl-armada'); clear(el);
+    if (!k.length) return emptyRow(el, 7, 'Belum ada kendaraan.');
+    for (const r of k) {
+      const tr = document.createElement('tr'); tr.className = 'click';
+      tr.addEventListener('click', () => openKendaraan(r.nopol));
+      td(tr, r.nopol); td(tr, r.jenis); td(tr, r.merek_tipe); td(tr, r.tahun == null ? '' : String(r.tahun), 'num'); td(tr, r.unit_kerja);
+      pill(tr, r.kondisi, r.kondisi === 'Baik' ? 'ok' : r.kondisi === 'Rusak Berat' ? 'bad' : 'warn');
+      pill(tr, r.status, r.status === 'Siap Pakai' ? 'ok' : 'warn');
+      el.appendChild(tr);
+    }
+  }
+
+  function renderRiwayat(s) {
+    const el = $('tbl-riwayat'); clear(el);
+    const rows = s.slice().sort((a, b) => b.tanggal.localeCompare(a.tanggal) || Number(b.id) - Number(a.id)).slice(0, 10);
+    if (!rows.length) return emptyRow(el, 6, 'Belum ada catatan servis.');
+    for (const r of rows) {
+      const tr = document.createElement('tr');
+      td(tr, tgl(parse(r.tanggal))); td(tr, r.nopol); td(tr, r.uraian); td(tr, r.jenis); td(tr, r.bengkel); td(tr, rp(r.biaya), 'num');
+      el.appendChild(tr);
+    }
+  }
+
+  // ---------- Rendering: charts ----------
+  function tipFor(el) {
+    const t = document.createElement('div'); t.className = 'tip'; t.hidden = true; el.appendChild(t);
+    return {
+      show(ev, lines) {
+        clear(t);
+        lines.forEach(([a, b], i) => {
+          const p = document.createElement('div');
+          if (b !== undefined) { const s = document.createElement('span'); s.className = 'm'; s.textContent = a + ': '; p.appendChild(s); p.appendChild(document.createTextNode(b)); }
+          else { p.textContent = a; if (i === 0) p.style.fontWeight = '600'; }
+          t.appendChild(p);
+        });
+        t.hidden = false;
+        const box = el.getBoundingClientRect();
+        let x = ev.clientX - box.left + 12; const y = ev.clientY - box.top + 12;
+        if (x + t.offsetWidth > box.width) x = Math.max(0, ev.clientX - box.left - t.offsetWidth - 12);
+        t.style.left = x + 'px'; t.style.top = y + 'px';
+      },
+      hide() { t.hidden = true; }
+    };
+  }
+
+  function emptyChart(el, text) { const d = document.createElement('div'); d.className = 'empty'; d.textContent = text; el.appendChild(d); }
+
+  function chartBulanan(rows) {
+    const el = $('ch-bulanan'); clear(el);
+    if (!rows.length) return emptyChart(el, 'Belum ada biaya tahun ini.');
+    const W = el.clientWidth || 600, H = 260, c0 = css('--c0'), c1 = css('--c1');
+    const svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('role', 'img').attr('aria-label', 'Grafik batang biaya pemeliharaan per bulan');
+    const y = d3.scaleLinear().domain([0, d3.max(rows, (r) => r.total) || 1]).nice().range([H - 24, 16]);
+    const yAx = svg.append('g').call(d3.axisLeft(y).ticks(5).tickFormat((v) => v === 0 ? '0' : (v / 1e6) + ' jt').tickSize(0));
+    yAx.selectAll('text').style('fill', css('--muted')).style('font-size', '12px');
+    let ml = 0; yAx.selectAll('text').each(function () { ml = Math.max(ml, this.getComputedTextLength()); });
+    ml = Math.ceil(ml) + 10;
+    yAx.attr('transform', `translate(${ml},0)`).select('.domain').remove();
+    const x = d3.scaleBand().domain(rows.map((r) => r.bulan)).range([ml, W]).padding(0.25);
+    svg.insert('g', ':first-child').selectAll('line').data(y.ticks(5)).join('line').attr('x1', ml).attr('x2', W).attr('y1', y).attr('y2', y).style('stroke', css('--grid'));
+    const xa = svg.append('g').attr('transform', `translate(0,${H - 24})`).call(d3.axisBottom(x).tickFormat((b) => BULAN[parse(b + '-01').getUTCMonth()]).tickSize(0));
+    xa.select('.domain').remove(); xa.selectAll('text').attr('dy', '1em').style('fill', css('--muted')).style('font-size', '12px');
+    const tip = tipFor(el);
+    const g = svg.append('g').selectAll('g').data(rows).join('g');
+    g.append('rect').attr('x', (r) => x(r.bulan)).attr('width', x.bandwidth()).attr('y', (r) => y(r.rutin)).attr('height', (r) => y(0) - y(r.rutin)).style('fill', c0);
+    g.append('rect').attr('x', (r) => x(r.bulan)).attr('width', x.bandwidth()).attr('y', (r) => y(r.total)).attr('height', (r) => y(r.rutin) - y(r.total)).style('fill', c1);
+    if (x.bandwidth() > 34) g.append('text').attr('x', (r) => x(r.bulan) + x.bandwidth() / 2).attr('y', (r) => y(r.total) - 4).attr('text-anchor', 'middle')
+      .style('font-size', '11.5px').style('fill', css('--muted')).text((r) => n1(r.total / 1e6));
+    g.append('rect').attr('x', (r) => x(r.bulan)).attr('width', x.bandwidth()).attr('y', 0).attr('height', H - 24).style('fill', 'transparent')
+      .on('pointermove', (ev, r) => { const d = parse(r.bulan + '-01'); tip.show(ev, [[BULAN[d.getUTCMonth()] + ' ' + d.getUTCFullYear()], ['Rutin', rp(r.rutin)], ['Perbaikan', rp(r.perbaikan)], ['Total', rp(r.total)]]); })
+      .on('pointerleave', () => tip.hide());
+  }
+
+  function hbars(el, rows, opt) {
+    clear(el);
+    if (!rows.length) return emptyChart(el, 'Tidak ada data.');
+    const W = el.clientWidth || 400, rowH = 28, H = rows.length * rowH + 8;
+    const svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('role', 'img').attr('aria-label', opt.aria);
+    const measure = (fn) => { let m = 0; const g = svg.append('g'); g.selectAll('text').data(rows).join('text').style('font-size', '12px').text(fn).each(function () { m = Math.max(m, this.getComputedTextLength()); }); g.remove(); return Math.ceil(m); };
+    const ml = measure(opt.label) + 10, mr = measure(opt.valueText) + 10;
+    const x = d3.scaleLinear().domain([0, opt.max]).range([ml, Math.max(ml + 40, W - mr)]);
+    const tip = tipFor(el);
+    const g = svg.selectAll('g.r').data(rows).join('g').attr('class', 'r').attr('transform', (r, i) => `translate(0,${i * rowH + 4})`);
+    g.append('text').attr('x', ml - 8).attr('y', rowH / 2 - 2).attr('dy', '0.32em').attr('text-anchor', 'end').style('font-size', '12px').style('fill', css('--fg')).text(opt.label);
+    if (opt.track) g.append('rect').attr('x', ml).attr('y', 4).attr('height', rowH - 12).attr('width', (r) => x(opt.track(r)) - ml).style('fill', css('--track')).attr('rx', 2);
+    g.append('rect').attr('x', ml).attr('y', 4).attr('height', rowH - 12).attr('width', (r) => Math.max(0, x(Math.min(opt.value(r), opt.max)) - ml)).style('fill', opt.color).attr('rx', 2);
+    g.append('text').attr('x', (r) => x(opt.track ? Math.max(opt.track(r), opt.value(r)) : opt.value(r)) + 6).attr('y', rowH / 2 - 2).attr('dy', '0.32em')
+      .style('font-size', '12px').style('fill', css('--muted')).style('font-variant-numeric', 'tabular-nums').text(opt.valueText);
+    g.append('rect').attr('width', W).attr('height', rowH).style('fill', 'transparent')
+      .on('pointermove', (ev, r) => tip.show(ev, opt.tip(r))).on('pointerleave', () => tip.hide());
+  }
+
+  function render() {
+    if (!DATA) return;
+    const f = filtered($('f-unit').value);
+    renderKpi(ringkasan(f));
+    renderTempo(jatuhTempo(f.k));
+    renderArmada(f.k);
+    renderRiwayat(f.s);
+    chartBulanan(biayaBulanan(f.s));
+    const bk = biayaKendaraan(f.k, f.s);
+    hbars($('ch-kendaraan'), bk, {
+      aria: 'Grafik batang total biaya per kendaraan',
+      max: d3.max(bk, (r) => r.total) || 1,
+      label: (r) => r.nopol, value: (r) => r.total, valueText: (r) => rpJt(r.total), color: css('--c0'),
+      tip: (r) => [[r.nopol], ['Kendaraan', r.merek], ['Total biaya', rp(r.total)], ['Jumlah servis', int(r.n) + ' kali']]
+    });
+    const su = serapanUnit(f.a, DATA.servis);
+    hbars($('ch-serapan'), su, {
+      aria: 'Grafik batang serapan anggaran per unit kerja',
+      max: d3.max(su, (r) => Math.max(r.pagu, r.real)) || 1,
+      label: (r) => r.unit, value: (r) => r.real, track: (r) => r.pagu, valueText: (r) => pct(r.persen),
+      color: (r) => r.persen > 100 ? css('--bad') : css('--c0'),
+      tip: (r) => [[r.unit], ['Pagu', rp(r.pagu)], ['Realisasi', rp(r.real)], ['Serapan', pct(r.persen)]]
+    });
+  }
+
+  // ---------- Forms ----------
+  document.querySelectorAll('dialog [data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
+
+  function openServis() {
+    if (!DATA || !DATA.kendaraan.length) return toast('Belum ada data kendaraan.');
+    $('f-servis').reset();
+    $('s-tanggal').value = TODAY_STR;
+    $('s-msg').textContent = '';
+    $('d-servis').showModal();
+  }
+
+  $('f-servis').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const nopol = $('s-nopol').value;
+    const row = {
+      tanggal: $('s-tanggal').value,
+      nopol,
+      jenis: $('s-jenis').value,
+      uraian: $('s-uraian').value.trim(),
+      bengkel: $('s-bengkel').value.trim() || null,
+      km: $('s-km').value === '' ? null : Number($('s-km').value),
+      biaya: Number($('s-biaya').value)
+    };
+    if (!row.uraian) { $('s-msg').textContent = 'Uraian pekerjaan wajib diisi.'; return; }
+    $('s-btn').disabled = true; $('s-msg').textContent = '';
+    try {
+      const {error} = await sb.from('servis').insert(row);
+      if (error) throw error;
+      const upd = {};
+      if ($('s-next').value) upd.servis_berikutnya = $('s-next').value;
+      if ($('s-selesai').checked) upd.status = 'Siap Pakai';
+      if (Object.keys(upd).length) {
+        const {error: e2} = await sb.from('kendaraan').update(upd).eq('nopol', nopol);
+        if (e2) throw new Error('Servis tersimpan, tetapi data kendaraan gagal diperbarui: ' + errText(e2));
+      }
+      $('d-servis').close();
+      toast('Catatan servis ' + nopol + ' tersimpan');
+      await loadData();
+    } catch (e) {
+      $('s-msg').textContent = errText(e);
+    } finally {
+      $('s-btn').disabled = false;
+    }
+  });
+
+  function fillKendaraanForm(nopol) {
+    const k = DATA.kendaraan.find((r) => r.nopol === nopol);
+    if (!k) return;
+    $('k-status').value = k.status; $('k-kondisi').value = k.kondisi;
+    $('k-pajak').value = k.pajak_tahunan || ''; $('k-stnk').value = k.stnk_5tahunan || ''; $('k-next').value = k.servis_berikutnya || '';
+  }
+  function openKendaraan(nopol) {
+    if (!DATA || !DATA.kendaraan.length) return toast('Belum ada data kendaraan.');
+    $('k-msg').textContent = '';
+    if (nopol) $('k-nopol').value = nopol;
+    fillKendaraanForm($('k-nopol').value);
+    $('d-kendaraan').showModal();
+  }
+  $('k-nopol').addEventListener('change', () => fillKendaraanForm($('k-nopol').value));
+
+  $('f-kendaraan').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const nopol = $('k-nopol').value;
+    const upd = {
+      status: $('k-status').value,
+      kondisi: $('k-kondisi').value,
+      pajak_tahunan: $('k-pajak').value || null,
+      stnk_5tahunan: $('k-stnk').value || null,
+      servis_berikutnya: $('k-next').value || null
+    };
+    $('k-btn').disabled = true; $('k-msg').textContent = '';
+    try {
+      const {data, error} = await sb.from('kendaraan').update(upd).eq('nopol', nopol).select('nopol');
+      if (error) throw error;
+      if (!data || !data.length) throw new Error('Data tidak berubah. Periksa izin akun Anda.');
+      $('d-kendaraan').close();
+      toast('Data ' + nopol + ' diperbarui');
+      await loadData();
+    } catch (e) {
+      $('k-msg').textContent = errText(e);
+    } finally {
+      $('k-btn').disabled = false;
+    }
+  });
+
+  // ---------- Auth & views ----------
+  let shown = null;
+  async function showApp(session) {
+    if (session) {
+      $('v-login').hidden = true; $('v-app').hidden = false;
+      setText('u-email', session.user && session.user.email || '—');
+      if (shown !== session.user.id) { shown = session.user.id; await loadData(); }
+    } else {
+      shown = null; DATA = null;
+      $('v-app').hidden = true; $('v-login').hidden = false;
+    }
+  }
+
+  $('f-login').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    $('l-btn').disabled = true; $('l-msg').textContent = '';
+    const {error} = await sb.auth.signInWithPassword({email: $('l-email').value.trim(), password: $('l-pass').value});
+    $('l-btn').disabled = false;
+    if (error) $('l-msg').textContent = errText(error);
+  });
+  $('b-logout').addEventListener('click', () => sb.auth.signOut());
+  $('b-refresh').addEventListener('click', async () => { await loadData(); toast('Data dimuat ulang'); });
+  $('b-servis').addEventListener('click', openServis);
+  $('b-kendaraan').addEventListener('click', () => openKendaraan());
+  $('f-unit').addEventListener('change', render);
+
+  let w = window.innerWidth;
+  window.addEventListener('resize', () => { if (Math.abs(window.innerWidth - w) > 20) { w = window.innerWidth; render(); } });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+
+  sb.auth.onAuthStateChange((_event, session) => { setTimeout(() => showApp(session), 0); });
+  sb.auth.getSession().then(({data}) => showApp(data.session));
+})();
+</script>
+</body>
+</html>
