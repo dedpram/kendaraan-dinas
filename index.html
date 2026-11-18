@@ -471,7 +471,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
 
       <section class="card panel" id="p-riwayat" hidden>
         <div class="panel-head">
-          <div><h2 id="r-title">Riwayat servis</h2><p id="r-sub">50 catatan terakhir semua armada. Klik foto untuk melihat kondisi sebelum dan sesudah servis.</p></div>
+          <div><h2 id="r-title">Riwayat servis</h2><p id="r-sub">15 catatan terakhir semua armada. Klik foto untuk melihat kondisi sebelum dan sesudah servis.</p></div>
         </div>
         <div class="r-filters">
           <label class="r-lbl" for="r-nopol">Armada</label>
@@ -834,6 +834,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
   const terbaru = (s) => s.slice().sort((a, b) => b.tanggal.localeCompare(a.tanggal) || Number(b.id) - Number(a.id));
 
   // Riwayat: filter per armada. Satu kendaraan dipilih -> ambil SELURUH riwayatnya (semua tahun) dari Supabase.
+  const RIWAYAT_MAKS = 15; // jumlah catatan yang ditampilkan untuk "Semua armada"
   let histCache = new Map(); // nopol -> {rows} | {loading} | {error}
   async function loadHistory(nopol) {
     histCache.set(nopol, {loading: true});
@@ -865,8 +866,8 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
     if (!nopol) {
       sum.hidden = true;
       setText('r-title', 'Riwayat servis');
-      setText('r-sub', '50 catatan terakhir semua armada' + (jenis ? ' (' + jenis.toLowerCase() + ')' : '') + '. Pilih armada untuk melihat seluruh riwayatnya.');
-      rows = terbaru(s).filter((r) => !jenis || r.jenis === jenis).slice(0, 50);
+      setText('r-sub', RIWAYAT_MAKS + ' catatan terakhir semua armada' + (jenis ? ' (' + jenis.toLowerCase() + ')' : '') + '. Pilih armada untuk melihat seluruh riwayatnya.');
+      rows = terbaru(s).filter((r) => !jenis || r.jenis === jenis).slice(0, RIWAYAT_MAKS);
     } else {
       const h = histCache.get(nopol);
       if (!h) { loadHistory(nopol); }
