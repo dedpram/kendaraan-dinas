@@ -3,87 +3,240 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard Pemeliharaan Kendaraan Dinas</title>
+<title>SiPeKa · Pemeliharaan Kendaraan Dinas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <style>
 :root{
-  --bg:#f7f7f5;--panel:#ffffff;--fg:#1f1f1d;--muted:#6b6a66;--line:#e4e2dc;
-  --ok:#2f7d4f;--warn:#b7791f;--bad:#c0392b;--accent:#3b6fb6;
-  --c0:#3b6fb6;--c1:#e08a3c;--track:#d9d7d0;--grid:#ecebe6;
-  --radius:10px;--shadow:0 6px 20px rgba(0,0,0,.08);
-  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --serif:Georgia,"Times New Roman",serif;
-}
-@media (prefers-color-scheme: dark){
-  :root{--bg:#1b1b1a;--panel:#242422;--fg:#ecebe6;--muted:#a3a19b;--line:#3a3936;--accent:#6c9be0;
-    --ok:#5cbf83;--warn:#e0a84a;--bad:#ef6f61;--c0:#6c9be0;--c1:#f0a462;--track:#3d3c39;--grid:#302f2d;--shadow:0 6px 20px rgba(0,0,0,.4)}
+  --page:#c9cbfb; --shell:#f4f5ff; --card:#ffffff; --ink:#1d1b3a; --muted:#77789a; --line:#e7e8f6;
+  --brand:#16a37a; --brand-soft:#dff5ec; --violet:#5b3fd6; --violet-soft:#ecebff;
+  --salmon:#ffc2b4; --coral:#ff7a5c; --purple:#6b45c7; --yellow:#ffcf4a; --green:#18b07e;
+  --ok:#16a37a; --warn:#d99a00; --bad:#e2483a;
+  --c0:#6b45c7; --c1:#ff7a5c; --track:#ecebfa; --grid:#eef0fa;
+  --r-xl:28px; --r-lg:20px; --r-md:14px;
+  --shadow:0 20px 50px rgba(64,60,160,.12);
+  --font:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
 }
 *{box-sizing:border-box}
 [hidden]{display:none !important}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.45}
-.wrap{max-width:1200px;margin:0 auto;padding:20px 20px 48px;display:flex;flex-direction:column;gap:30px}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-.topbar .actions{display:flex;gap:8px;flex-wrap:wrap}
-h1{font-family:var(--serif);font-weight:400;font-size:2rem;margin:0}
-.lede{margin:8px 0 0;color:var(--muted);max-width:70ch}
-.lede b{color:var(--fg);font-weight:600}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:4px}
-.card h3,section h2{margin:0;font-size:15px;font-weight:600}
-.win,.sub,.note{font-size:12.5px;color:var(--muted)}
-.note{margin:0}
-.big{font-family:var(--serif);font-size:2rem;line-height:1.15;font-variant-numeric:tabular-nums}
-.sub{font-variant-numeric:tabular-nums}
-.up{color:var(--bad)}.down{color:var(--ok)}
-section{display:flex;flex-direction:column;gap:8px}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:30px}
+html,body{margin:0}
+body{background:var(--page);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45;min-height:100vh;
+  background-image:radial-gradient(circle at 8% 12%,rgba(255,255,255,.35) 0 180px,transparent 181px),radial-gradient(circle at 96% 88%,rgba(255,255,255,.25) 0 220px,transparent 221px)}
+button,select,input{font:inherit;color:inherit}
+h1,h2,h3{margin:0}
+
+/* ---------- shell ---------- */
+.shell{max-width:1360px;margin:28px auto;background:var(--shell);border-radius:var(--r-xl);box-shadow:var(--shadow);overflow:hidden}
+.top{display:flex;align-items:center;gap:18px;padding:18px 28px;background:var(--card);border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:22px;letter-spacing:.5px;color:var(--brand)}
+.logo svg{width:30px;height:30px}
+.top-actions{flex:1;display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.tbtn{white-space:nowrap;flex:none;display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;padding:9px 14px;border-radius:999px;font-weight:600;font-size:13px;cursor:pointer;color:var(--ink)}
+.tbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tbtn:hover{background:var(--violet-soft)}
+.tbtn.primary{background:var(--brand);color:#fff}
+.tbtn.primary:hover{background:#12916c}
+.user{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--violet-soft);color:var(--violet);display:grid;place-items:center;font-weight:800}
+.linkbtn{border:0;background:transparent;color:var(--muted);font-size:12px;cursor:pointer;padding:4px 6px;border-radius:8px}
+.linkbtn:hover{color:var(--bad);background:#fdeeee}
+
+.cols{display:grid;grid-template-columns:260px minmax(0,1fr) 300px;gap:24px;padding:24px 28px 28px}
+.card{background:var(--card);border-radius:var(--r-lg);padding:20px}
+.muted{color:var(--muted)}
+.sub{font-size:12.5px;color:var(--muted)}
+
+/* ---------- left ---------- */
+.left{display:flex;flex-direction:column;gap:22px}
+.mini{display:grid;grid-template-columns:1fr 1fr;text-align:center;gap:6px}
+.mini .n{font-size:26px;font-weight:800;color:var(--violet);line-height:1.1}
+.mini .l{font-size:12px;color:var(--violet);font-weight:600;opacity:.85}
+.prog{position:relative;height:6px;border-radius:99px;background:var(--line);margin-top:12px}
+.prog > i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--yellow);transition:width .6s ease}
+.prog > b{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:14px;line-height:1;color:var(--yellow);transition:left .6s ease}
+.budget h3{font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.budget h3 span{font-size:13px;font-weight:600;color:var(--muted)}
+.budget .prog > i{background:var(--brand)}
+.budget .prog.over > i{background:var(--bad)}
+.budget .sub{text-align:center;margin-top:12px}
+.tl{position:relative;display:flex;flex-direction:column;gap:2px;padding-left:4px}
+.tl::before{content:"";position:absolute;left:12px;top:16px;bottom:16px;width:2px;background:var(--line)}
+.mi{position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;padding:9px 10px 9px 2px;border-radius:12px;font-size:13.5px;font-weight:600;color:var(--violet);cursor:pointer}
+.mi .dot{position:relative;z-index:1;width:18px;height:18px;flex:none;border-radius:50%;border:2px solid var(--violet);background:var(--shell);display:grid;place-items:center;margin-left:1px}
+.mi .dot svg{width:10px;height:10px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.mi span{flex:1}
+.mi:hover{background:var(--violet-soft)}
+.mi.active{background:var(--brand);color:#fff;box-shadow:0 8px 18px rgba(22,163,122,.28);padding-left:10px;margin-left:-8px;width:calc(100% + 8px)}
+.mi.active .dot{background:transparent;border-color:#fff}
+.mi.active .dot svg{opacity:1}
+.badge{font-size:11px;font-weight:700;min-width:22px;text-align:center;padding:2px 7px;border-radius:999px;background:var(--violet-soft);color:var(--violet)}
+.badge.bad{background:var(--bad);color:#fff}
+.mi.active .badge{background:rgba(255,255,255,.25);color:#fff}
+.left-foot{border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--muted)}
+.sel{appearance:none;width:100%;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%235b3fd6' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;border:1px solid var(--line);border-radius:12px;padding:9px 34px 9px 12px;font-weight:600;color:var(--ink);cursor:pointer}
+
+/* ---------- center ---------- */
+.center{display:flex;flex-direction:column;gap:22px;min-width:0}
+.tasks-head{display:flex;justify-content:space-between;gap:16px;margin-bottom:18px}
+.tasks-head h2{font-size:24px;font-weight:800}
+.tasks-head p{margin:6px 0 0;color:var(--muted);font-size:13px;max-width:62ch}
+.tasks-head p b{color:var(--ink)}
+.flame{display:flex;flex-direction:column;align-items:center;gap:6px;flex:none}
+.flame .ring{width:52px;height:52px;border-radius:50%;background:#ffe9a8;display:grid;place-items:center}
+.flame .ring svg{width:30px;height:30px}
+.flame .cnt{font-size:12px;font-weight:700;color:var(--violet);background:var(--violet-soft);border-radius:999px;padding:2px 10px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(200px,auto);gap:14px}
+.tile{position:relative;overflow:hidden;border:0;border-radius:var(--r-lg);padding:20px;text-align:left;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;color:#fff;transition:transform .15s ease,box-shadow .15s ease}
+.tile:hover{transform:translateY(-3px);box-shadow:0 14px 28px rgba(40,30,120,.18)}
+.tile:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.tile .chip{position:absolute;top:14px;right:14px;min-width:30px;height:30px;padding:0 9px;border-radius:999px;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--ink);white-space:nowrap;z-index:1}
+.tile .kick{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.9}
+.tile .val{font-size:26px;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .ttl{font-size:17px;font-weight:700;line-height:1.3}
+.tile .tfoot{font-size:11.5px;opacity:.9;margin-top:6px}
+.tile > span{position:relative;z-index:1}
+.tile .art{position:absolute;pointer-events:none}
+.t-big{grid-column:span 2;background:var(--salmon);color:var(--ink);justify-content:center}
+.t-big .val{font-size:34px}
+.t-coral{background:var(--coral)}
+.t-purple{background:var(--purple)}
+.t-yellow{background:var(--yellow);color:var(--ink)}
+.t-green{background:var(--green)}
+.up{color:var(--bad)} .down{color:var(--ok)}
+.t-big .delta{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:13px;background:rgba(255,255,255,.7);border-radius:999px;padding:3px 10px;width:max-content;margin-top:6px}
+
+.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.panel-head h2{font-size:18px;font-weight:800}
+.panel-head p{margin:4px 0 0;font-size:12.5px;color:var(--muted)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .chart{position:relative;min-height:80px;width:100%}
-#ch-bulanan{min-height:260px}
+#ch-bulanan{min-height:280px}
 .chart svg{display:block;overflow:visible}
-.chart text{font-family:var(--sans)}
-.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:8px;padding:6px 10px;font-size:12.5px;white-space:nowrap;z-index:5;font-variant-numeric:tabular-nums}
-.tip .m{color:var(--muted)}
-.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
-.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-.tw{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.chart text{font-family:var(--font)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;border-radius:12px;padding:8px 12px;font-size:12px;white-space:nowrap;z-index:5;font-variant-numeric:tabular-nums;box-shadow:0 10px 24px rgba(0,0,0,.2)}
+.tip .m{opacity:.7}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-md)}
 table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
-th{text-align:left;font-weight:600;color:var(--muted);padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
-td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{text-align:left;font-weight:700;font-size:11.5px;letter-spacing:.3px;text-transform:uppercase;color:var(--muted);background:#fafaff;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
 tr:last-child td{border-bottom:0}
 tr.click{cursor:pointer}
-tr.click:hover td{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+tr.click:hover td{background:#f7f6ff}
 .num{text-align:right}
-.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;border:1px solid var(--line)}
-.pill.bad{color:var(--bad);border-color:var(--bad)}
-.pill.warn{color:var(--warn);border-color:var(--warn)}
-.pill.ok{color:var(--ok);border-color:var(--ok)}
-.empty{color:var(--muted);font-size:13px}
-.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-select,input,textarea{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
-.filters select{width:auto;padding:6px 10px}
-button{font:inherit;border-radius:8px;padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-button:disabled{opacity:.6;cursor:default}
-footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
-.alert{background:var(--panel);border:1px solid var(--bad);color:var(--bad);border-radius:var(--radius);padding:12px 14px;font-size:13.5px}
-/* login */
-.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px;display:flex;flex-direction:column;gap:12px}
-.login h1{font-size:1.5rem}
-label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;background:var(--violet-soft);color:var(--violet)}
+.pill.bad{background:#fde6e3;color:var(--bad)}
+.pill.warn{background:#fff3cf;color:#a87400}
+.pill.ok{background:var(--brand-soft);color:var(--ok)}
+.empty{color:var(--muted);font-size:13px;padding:8px 0}
+
+/* ---------- right ---------- */
+.right{display:flex;flex-direction:column;gap:22px}
+.promo{position:relative;overflow:hidden;background:#dcdcfb;border-radius:var(--r-lg);padding:18px 18px 18px 18px;min-height:118px;cursor:pointer;border:0;text-align:left}
+.promo b{display:block;font-size:14.5px;margin-bottom:6px;max-width:60%}
+.promo span{font-size:12px;color:var(--violet);font-weight:600;max-width:58%;display:block}
+.promo svg{position:absolute;right:-6px;bottom:-4px;width:150px;height:auto}
+.promo:hover{background:#d2d2fa}
+.rh{font-size:16px;font-weight:800;margin-bottom:-8px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:var(--card);border-radius:var(--r-md);padding:14px}
+.stat .row{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.stat .ic{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none}
+.stat .ic svg{width:18px;height:18px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.stat .v{white-space:nowrap;font-size:19px;font-weight:800;color:var(--violet);font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .l{font-size:11.5px;color:var(--muted);margin-top:4px}
+.cal{background:transparent}
+.cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cal-nav{display:flex;gap:4px}
+.cal-nav button{width:28px;height:28px;border-radius:50%;border:0;background:var(--card);cursor:pointer;font-weight:800;color:var(--violet)}
+.cal-nav button:hover{background:var(--violet-soft)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px 2px;text-align:center}
+.cal-grid .wd{font-size:11px;font-weight:800;color:var(--ink);padding-bottom:4px}
+.cal-grid .d{height:32px;display:grid;place-items:center;font-size:12px;font-weight:600;color:var(--ink);border-radius:50%;border:0;background:transparent;padding:0;width:32px;margin:0 auto;font-variant-numeric:tabular-nums}
+.cal-grid .d.out{color:#b6b7cf}
+.cal-grid .d.today{background:var(--card);box-shadow:inset 0 0 0 1.5px var(--violet)}
+.cal-grid .d.due{background:var(--yellow);cursor:pointer;box-shadow:0 0 0 2px #fff,0 2px 6px rgba(217,154,0,.35)}
+.cal-grid .d.late{background:var(--bad);color:#fff;cursor:pointer;box-shadow:0 0 0 2px #fff,0 2px 6px rgba(226,72,58,.35)}
+.cal-grid .d.sel{outline:2px solid var(--violet);outline-offset:2px}
+.cal-month{margin-top:10px;background:var(--card);border-radius:12px;text-align:center;padding:8px;font-size:12.5px;font-weight:700;color:var(--ink)}
+.cal-legend{display:flex;gap:12px;justify-content:center;font-size:11px;color:var(--muted);margin-top:8px}
+.cal-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.cal-detail{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.cal-item{background:var(--card);border-radius:12px;padding:8px 12px;font-size:12px;display:flex;justify-content:space-between;gap:8px;cursor:pointer}
+.cal-item:hover{background:var(--violet-soft)}
+.recent{display:flex;flex-direction:column;gap:8px}
+.ri{background:var(--card);border-radius:var(--r-md);padding:10px 12px;display:flex;align-items:center;gap:10px}
+.ri .ic{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;flex:none;font-size:11px;font-weight:800}
+.ri .ic.r{background:var(--violet-soft);color:var(--violet)}
+.ri .ic.p{background:#ffe5de;color:var(--coral)}
+.ri .t{flex:1;min-width:0}
+.ri .t b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ri .t span{font-size:11.5px;color:var(--muted)}
+.ri .c{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.pagefoot{padding:0 28px 22px;font-size:11.5px;color:var(--muted)}
+
+/* ---------- login / alerts / dialogs ---------- */
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login form{width:100%;max-width:400px;background:var(--card);border-radius:var(--r-xl);box-shadow:var(--shadow);padding:34px;display:flex;flex-direction:column;gap:14px}
+.login h1{font-size:22px;font-weight:800}
+.alert{background:#fdeeee;color:var(--bad);border-radius:var(--r-md);padding:12px 16px;font-size:13px;font-weight:600}
+.cfg{max-width:640px;margin:60px auto;padding:0 20px}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
+input,textarea,dialog select{width:100%;border:1px solid var(--line);background:#fbfbff;border-radius:12px;padding:10px 12px;font-size:14px}
+input:focus,select:focus{outline:2px solid var(--violet-soft);border-color:var(--violet)}
+.btn{border:0;border-radius:999px;padding:10px 18px;font-weight:700;cursor:pointer;background:var(--violet-soft);color:var(--violet)}
+.btn.primary{background:var(--brand);color:#fff}
+.btn:disabled{opacity:.6;cursor:default}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.check{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--fg)}
+.check{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink);font-weight:500}
 .check input{width:auto}
-/* dialog */
-dialog{border:1px solid var(--line);border-radius:14px;padding:0;background:var(--panel);color:var(--fg);width:min(520px,calc(100vw - 24px));box-shadow:var(--shadow)}
-dialog::backdrop{background:rgba(0,0,0,.35)}
-dialog form{padding:22px;display:flex;flex-direction:column;gap:12px}
-dialog h2{margin:0;font-size:18px;font-weight:600}
+dialog{border:0;border-radius:var(--r-xl);padding:0;background:var(--card);color:var(--ink);width:min(540px,calc(100vw - 24px));box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(40,36,110,.35);backdrop-filter:blur(2px)}
+dialog form{padding:26px;display:flex;flex-direction:column;gap:14px}
+dialog h2{font-size:20px;font-weight:800}
 .dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:13.5px;z-index:50;box-shadow:var(--shadow)}
-.msg{font-size:13px;color:var(--bad);min-height:1em}
+.msg{font-size:12.5px;color:var(--bad);min-height:1em;font-weight:600}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:50;box-shadow:var(--shadow)}
+
+@media (prefers-reduced-motion: no-preference){
+  .panel{animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:1240px){
+  .cols{grid-template-columns:240px minmax(0,1fr)}
+  .right{grid-column:1 / -1;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));align-items:start}
+  .rh{margin:0 0 -14px}
+}
+@media (max-width:860px){
+  .shell{margin:0;border-radius:0}
+  .top{flex-wrap:wrap;padding:14px 16px;gap:10px}
+  .top-actions{order:3;flex-basis:100%;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap}
+  .user .email{display:none}
+  .user{margin-left:auto}
+  .cols{grid-template-columns:minmax(0,1fr);padding:16px;gap:18px}
+  .left{gap:14px}
+  .tl{flex-direction:row;overflow-x:auto;gap:6px;padding:2px;scrollbar-width:none}
+  .tl::-webkit-scrollbar{display:none}
+  .tl::before{display:none}
+  .mi,.mi.active{width:auto;margin:0;white-space:nowrap;padding:8px 12px;background:var(--card)}
+  .mi.active{background:var(--brand)}
+  .mi .dot{display:none}
+  .tiles{grid-template-columns:1fr 1fr;grid-auto-rows:minmax(170px,auto);gap:10px}
+  .tile{padding:16px}
+  .tile .val{font-size:22px}
+  .t-big .val{font-size:26px}
+  .tile .ttl{font-size:15px}
+  .t-big .art{opacity:.35}
+  .t-big{grid-column:span 2}
+  .tasks-head h2{font-size:20px}
+  .right{grid-template-columns:minmax(0,1fr)}
+}
 </style>
 </head>
 <body>
@@ -91,118 +244,209 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
 <!-- ============ LOGIN ============ -->
 <div class="login" id="v-login" hidden>
   <form id="f-login">
-    <h1>Pemeliharaan Kendaraan Dinas</h1>
-    <p class="note">Masuk dengan akun yang diberikan admin.</p>
+    <div class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="9" fill="#16a37a"/><path d="M8 19l2-5h12l2 5v3H8z" fill="#fff"/><circle cx="12" cy="22" r="2" fill="#16a37a" stroke="#fff" stroke-width="1.5"/><circle cx="20" cy="22" r="2" fill="#16a37a" stroke="#fff" stroke-width="1.5"/></svg>SiPeKa</div>
+    <h1>Selamat datang kembali</h1>
+    <p class="sub" style="margin:-6px 0 4px">Sistem Pemeliharaan Kendaraan Dinas. Masuk dengan akun yang diberikan admin.</p>
     <label class="f">Email<input type="email" id="l-email" required autocomplete="username"></label>
     <label class="f">Password<input type="password" id="l-pass" required autocomplete="current-password"></label>
     <div class="msg" id="l-msg"></div>
-    <button class="primary" type="submit" id="l-btn">Masuk</button>
+    <button class="btn primary" type="submit" id="l-btn">Masuk</button>
   </form>
 </div>
 
 <!-- ============ CONFIG ERROR ============ -->
-<div class="wrap" id="v-config" hidden>
+<div class="cfg" id="v-config" hidden>
   <div class="alert">Konfigurasi Supabase belum diisi. Buka file <b>config.js</b>, isi <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code>, lalu muat ulang halaman ini.</div>
 </div>
 
 <!-- ============ APP ============ -->
-<div class="wrap" id="v-app" hidden>
-  <div class="topbar">
-    <span>Masuk sebagai <b id="u-email">—</b></span>
-    <div class="actions">
-      <button class="primary" id="b-servis">＋ Catat servis</button>
-      <button id="b-kendaraan">Update kendaraan</button>
-      <button id="b-refresh" title="Muat ulang data">↻ Muat ulang</button>
-      <button id="b-logout">Keluar</button>
-    </div>
-  </div>
-
-  <header>
-    <h1>Pemeliharaan Kendaraan Dinas</h1>
-    <p class="lede"><b id="t-siap">—</b> dari <b id="t-total">—</b> kendaraan siap pakai. Ada <b id="t-tempo">—</b> kewajiban (pajak, STNK, servis) yang jatuh tempo dalam 30 hari, dan biaya pemeliharaan bulan ini <b id="t-arah">—</b> dibanding bulan lalu.</p>
+<div class="shell" id="v-app" hidden>
+  <header class="top">
+    <div class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="9" fill="#16a37a"/><path d="M8 19l2-5h12l2 5v3H8z" fill="#fff"/><circle cx="12" cy="22" r="2" fill="#16a37a" stroke="#fff" stroke-width="1.5"/><circle cx="20" cy="22" r="2" fill="#16a37a" stroke="#fff" stroke-width="1.5"/></svg>SiPeKa</div>
+    <nav class="top-actions">
+      <button class="tbtn primary" id="b-servis"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Catat servis</button>
+      <button class="tbtn" id="b-kendaraan"><svg viewBox="0 0 24 24"><path d="M4 15l2-6h12l2 6v4H4z"/><circle cx="8" cy="19" r="1.6"/><circle cx="16" cy="19" r="1.6"/></svg>Update kendaraan</button>
+      <button class="tbtn" id="b-refresh"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>Muat ulang</button>
+    </nav>
+    <div class="user"><span class="email" id="u-email">—</span><span class="avatar" id="u-avatar">?</span><button class="linkbtn" id="b-logout">Keluar</button></div>
   </header>
 
-  <div class="alert" id="app-error" hidden></div>
+  <div class="cols">
+    <!-- ===== KIRI ===== -->
+    <aside class="left">
+      <div>
+        <div class="mini">
+          <div><div class="n" data-k="siap">—</div><div class="l">Siap pakai</div></div>
+          <div><div class="n" data-k="total">—</div><div class="l">Total armada</div></div>
+        </div>
+        <div class="prog" id="prog-siap"><i style="width:0"></i><b style="left:0">★</b></div>
+      </div>
 
-  <div class="filters">
-    <label for="f-unit">Unit kerja:</label>
-    <select id="f-unit"><option value="">Semua unit kerja</option></select>
+      <div class="card budget">
+        <h3>Anggaran <span id="tahun">—</span><span data-k="serapan">—</span></h3>
+        <div class="prog" id="prog-anggaran"><i style="width:0"></i></div>
+        <div class="sub"><span data-k="realisasi-jt">—</span> dari <span data-k="pagu-jt">—</span></div>
+      </div>
+
+      <nav class="tl" aria-label="Menu">
+        <button class="mi" data-panel="p-tempo"><i class="dot"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2 4.8-4.8"/></svg></i><span>Perlu ditindaklanjuti</span><b class="badge" id="badge-tempo" hidden></b></button>
+        <button class="mi" data-panel="p-bulanan"><i class="dot"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2 4.8-4.8"/></svg></i><span>Biaya per bulan</span></button>
+        <button class="mi" data-panel="p-kendaraan"><i class="dot"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2 4.8-4.8"/></svg></i><span>Biaya per kendaraan</span></button>
+        <button class="mi" data-panel="p-serapan"><i class="dot"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2 4.8-4.8"/></svg></i><span>Serapan anggaran</span></button>
+        <button class="mi" data-panel="p-armada"><i class="dot"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2 4.8-4.8"/></svg></i><span>Daftar armada</span></button>
+        <button class="mi" data-panel="p-riwayat"><i class="dot"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2 4.8-4.8"/></svg></i><span>Riwayat servis</span></button>
+      </nav>
+
+      <div class="left-foot">
+        <label for="f-unit">Tampilkan unit kerja</label>
+        <select class="sel" id="f-unit"><option value="">Semua unit kerja</option></select>
+      </div>
+    </aside>
+
+    <!-- ===== TENGAH ===== -->
+    <main class="center">
+      <div class="alert" id="app-error" hidden></div>
+
+      <section class="card">
+        <div class="tasks-head">
+          <div>
+            <h2>Ringkasan hari ini</h2>
+            <p><b data-k="siap">—</b> dari <b data-k="total">—</b> kendaraan siap pakai. Ada <b data-k="tempo">—</b> kewajiban jatuh tempo dalam 30 hari, dan biaya bulan ini <b id="t-arah">—</b> dibanding bulan lalu.</p>
+          </div>
+          <div class="flame">
+            <div class="ring"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c1 5 7 7 7 15a7 7 0 0 1-14 0c0-4 2-6 3-8 .5 2 1.5 3 3 3-1-4 0-7 1-10z" fill="#ff8a3d"/><circle cx="16" cy="19" r="4" fill="#ffcf4a"/></svg></div>
+            <span class="cnt"><span data-k="telat">—</span> terlambat</span>
+          </div>
+        </div>
+
+        <div class="tiles">
+          <button class="tile t-big" data-goto="p-bulanan">
+            <svg class="art" style="right:14px;bottom:0;width:46%;max-width:260px" viewBox="0 0 260 170" aria-hidden="true">
+              <circle cx="200" cy="58" r="34" fill="#ff8f6b"/>
+              <rect x="40" y="96" width="34" height="74" rx="10" fill="#6b45c7"/>
+              <rect x="88" y="66" width="34" height="104" rx="10" fill="#ff7a5c"/>
+              <rect x="136" y="112" width="34" height="58" rx="10" fill="#18b07e"/>
+              <rect x="184" y="80" width="34" height="90" rx="10" fill="#1d1b3a"/>
+              <path d="M24 70l40-20 40 14 44-38 40 18" fill="none" stroke="#1d1b3a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="188" cy="44" r="7" fill="#fff"/>
+              <path d="M230 120l18 30h-36z" fill="#ffcf4a"/>
+            </svg>
+            <span class="chip">Rp</span>
+            <span class="kick">Biaya bulan ini</span>
+            <span class="val" data-k="biaya">—</span>
+            <span class="delta"><span id="k-ubah">—</span>&nbsp;<span class="muted" style="font-weight:600">vs bulan lalu</span></span>
+            <span class="tfoot">Bulan lalu: <span data-k="lalu">—</span></span>
+          </button>
+
+          <button class="tile t-coral" data-goto="p-tempo">
+            <svg class="art" style="right:-24px;top:-24px;width:104px" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="44" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="14"/><path d="M60 34v28l16 10" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
+            <span class="kick">Jatuh tempo</span>
+            <span class="val" data-k="tempo">—</span>
+            <span class="ttl" style="font-size:14px">kewajiban, <span data-k="telat">—</span> sudah lewat</span>
+            <span class="tfoot">Pajak, STNK dan servis berkala</span>
+          </button>
+
+          <button class="tile t-purple" data-goto="p-armada">
+            <svg class="art" style="left:8px;top:8px;width:108px" viewBox="0 0 150 100" aria-hidden="true"><path d="M20 62l14-26h70l16 26v18H20z" fill="#8f6ae6"/><path d="M42 40h56l10 20H32z" fill="#c9b8ff"/><circle cx="44" cy="80" r="11" fill="#1d1b3a"/><circle cx="96" cy="80" r="11" fill="#1d1b3a"/><circle cx="44" cy="80" r="4" fill="#fff"/><circle cx="96" cy="80" r="4" fill="#fff"/><path d="M118 20l6 10 10 2-8 7 2 10-10-5-10 5 2-10-8-7 10-2z" fill="#ffcf4a"/></svg>
+            <span class="chip" data-k="perbaikan">—</span>
+            <span class="kick">Bengkel</span>
+            <span class="ttl">Dalam perbaikan</span>
+            <span class="tfoot">Klik untuk lihat armada</span>
+          </button>
+
+          <button class="tile t-yellow" data-goto="p-serapan">
+            <svg class="art" style="right:-22px;top:-22px;width:96px" viewBox="0 0 110 110" aria-hidden="true"><circle cx="55" cy="55" r="40" fill="#ffe07f"/><path d="M55 15a40 40 0 0 1 40 40H55z" fill="#1d1b3a"/></svg>
+            <span class="kick">Serapan anggaran</span>
+            <span class="val" data-k="serapan">—</span>
+            <span class="tfoot">Dari pagu tahun berjalan</span>
+          </button>
+
+          <button class="tile t-green" data-goto="p-armada">
+            <svg class="art" style="left:-6px;top:-6px;width:96px" viewBox="0 0 110 110" aria-hidden="true"><circle cx="40" cy="40" r="34" fill="rgba(255,255,255,.18)"/><path d="M24 42l12 12 24-26" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="chip"><span data-k="siap">—</span>/<span data-k="total">—</span></span>
+            <span class="kick">Armada</span>
+            <span class="ttl">Siap pakai</span>
+            <span class="tfoot">Kendaraan yang bisa dipakai hari ini</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== PANEL MENU ===== -->
+      <section class="card panel" id="p-tempo">
+        <div class="panel-head"><div><h2>Perlu ditindaklanjuti: jatuh tempo dalam 30 hari</h2><p>Diurutkan dari yang paling mendesak. Klik baris untuk memperbarui tanggal setelah dibayar atau diservis.</p></div></div>
+        <div class="tw"><table>
+          <thead><tr><th>Kendaraan</th><th>Unit kerja</th><th>Kewajiban</th><th>Tanggal</th><th>Status</th></tr></thead>
+          <tbody id="tbl-tempo"></tbody>
+        </table></div>
+      </section>
+
+      <section class="card panel" id="p-bulanan" hidden>
+        <div class="panel-head"><div><h2>Biaya pemeliharaan per bulan</h2><p>Tahun berjalan, dalam juta rupiah.</p></div>
+          <div class="legend"><span><span class="sw" style="background:var(--c0)"></span>Servis rutin</span><span><span class="sw" style="background:var(--c1)"></span>Perbaikan</span></div></div>
+        <div class="chart" id="ch-bulanan"></div>
+      </section>
+
+      <section class="card panel" id="p-kendaraan" hidden>
+        <div class="panel-head"><div><h2>Total biaya per kendaraan, tahun berjalan</h2><p>Kendaraan di urutan atas paling banyak menyerap biaya; kandidat evaluasi atau usulan penghapusan.</p></div></div>
+        <div class="chart" id="ch-kendaraan"></div>
+      </section>
+
+      <section class="card panel" id="p-serapan" hidden>
+        <div class="panel-head"><div><h2>Serapan anggaran per unit kerja</h2><p>Batang abu-abu = pagu; isian = realisasi. Merah jika melebihi pagu.</p></div></div>
+        <div class="chart" id="ch-serapan"></div>
+      </section>
+
+      <section class="card panel" id="p-armada" hidden>
+        <div class="panel-head"><div><h2>Daftar armada</h2><p>Klik baris untuk mengubah status, kondisi, atau tanggal jatuh tempo.</p></div></div>
+        <div class="tw"><table>
+          <thead><tr><th>Kendaraan</th><th>Jenis</th><th class="num">Tahun</th><th>Unit kerja</th><th>Kondisi</th><th>Status</th></tr></thead>
+          <tbody id="tbl-armada"></tbody>
+        </table></div>
+      </section>
+
+      <section class="card panel" id="p-riwayat" hidden>
+        <div class="panel-head"><div><h2>Riwayat servis terbaru</h2><p>20 catatan terakhir.</p></div></div>
+        <div class="tw"><table>
+          <thead><tr><th>Tanggal</th><th>Nopol</th><th>Uraian</th><th>Jenis</th><th>Bengkel</th><th class="num">Km</th><th class="num">Biaya</th></tr></thead>
+          <tbody id="tbl-riwayat"></tbody>
+        </table></div>
+      </section>
+    </main>
+
+    <!-- ===== KANAN ===== -->
+    <aside class="right">
+      <button class="promo" id="promo-servis">
+        <b>Kendaraan baru keluar bengkel?</b>
+        <span>Catat servisnya sekarang, cukup 1 menit.</span>
+        <svg viewBox="0 0 160 110" aria-hidden="true"><ellipse cx="88" cy="100" rx="64" ry="8" fill="#c3c2f5"/><path d="M30 70l16-30h70l20 30v20H30z" fill="#6b45c7"/><path d="M54 44h56l12 22H44z" fill="#e8e3ff"/><rect x="30" y="76" width="106" height="8" fill="#5236b0"/><circle cx="56" cy="90" r="12" fill="#1d1b3a"/><circle cx="112" cy="90" r="12" fill="#1d1b3a"/><circle cx="56" cy="90" r="4.5" fill="#ffcf4a"/><circle cx="112" cy="90" r="4.5" fill="#ffcf4a"/><path d="M132 16l-14 14 6 6 14-14a8 8 0 0 0-6-6z" fill="#ff7a5c"/><path d="M118 30l-10 10" stroke="#1d1b3a" stroke-width="5" stroke-linecap="round"/><circle cx="24" cy="30" r="8" fill="#ffcf4a"/></svg>
+      </button>
+
+      <div>
+        <h3 class="rh">Statistik</h3>
+        <div class="stats" style="margin-top:20px">
+          <div class="stat"><div class="row"><span class="ic" style="background:#fff1c9"><svg viewBox="0 0 24 24" stroke="#d99a00"><path d="M4 15l2-6h12l2 6v4H4z"/><circle cx="8" cy="19" r="1.4"/><circle cx="16" cy="19" r="1.4"/></svg></span><span class="v" data-k="total">—</span></div><div class="l">Total kendaraan</div></div>
+          <div class="stat"><div class="row"><span class="ic" style="background:#ffe5de"><svg viewBox="0 0 24 24" stroke="#ff7a5c"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-2.5z"/></svg></span><span class="v" data-k="nservis">—</span></div><div class="l">Servis tahun ini</div></div>
+          <div class="stat"><div class="row"><span class="ic" style="background:#ffe1ec"><svg viewBox="0 0 24 24" stroke="#e2486e"><path d="M4 7h16v12H4z"/><path d="M4 11h16M8 15h3"/></svg></span><span class="v" data-k="realisasi-jt">—</span></div><div class="l">Realisasi biaya</div></div>
+          <div class="stat"><div class="row"><span class="ic" style="background:var(--brand-soft)"><svg viewBox="0 0 24 24" stroke="#16a37a"><path d="M4 18l5-6 4 3 7-9"/><path d="M15 6h5v5"/></svg></span><span class="v" data-k="rata-jt">—</span></div><div class="l">Rata-rata per servis</div></div>
+        </div>
+      </div>
+
+      <div class="cal">
+        <div class="cal-head"><h3 class="rh" style="margin:0">Kalender jatuh tempo</h3>
+          <div class="cal-nav"><button id="cal-prev" aria-label="Bulan sebelumnya">‹</button><button id="cal-next" aria-label="Bulan berikutnya">›</button></div></div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-month" id="cal-month">—</div>
+        <div class="cal-legend"><span><i style="background:var(--yellow)"></i>Jatuh tempo</span><span><i style="background:var(--bad)"></i>Terlambat</span></div>
+        <div class="cal-detail" id="cal-detail"></div>
+      </div>
+
+      <div>
+        <h3 class="rh">Servis terakhir</h3>
+        <div class="recent" id="recent" style="margin-top:20px"></div>
+      </div>
+    </aside>
   </div>
-
-  <section class="kpis">
-    <div class="card">
-      <h3>Kendaraan siap pakai</h3>
-      <span class="win">Kondisi saat ini</span>
-      <div class="big"><span id="k-siap">—</span> <span class="sub">dari <span id="k-total">—</span></span></div>
-      <div class="sub"><span id="k-perbaikan">—</span> unit sedang dalam perbaikan</div>
-    </div>
-    <div class="card">
-      <h3>Biaya pemeliharaan</h3>
-      <span class="win">Bulan berjalan</span>
-      <div class="big" id="k-biaya">—</div>
-      <div class="sub"><span id="k-ubah">—</span> vs bulan lalu (<span id="k-lalu">—</span>)</div>
-    </div>
-    <div class="card">
-      <h3>Serapan anggaran pemeliharaan</h3>
-      <span class="win">Tahun anggaran berjalan</span>
-      <div class="big" id="k-serapan">—</div>
-      <div class="sub"><span id="k-realisasi">—</span> dari pagu <span id="k-pagu">—</span></div>
-    </div>
-    <div class="card">
-      <h3>Jatuh tempo ≤ 30 hari</h3>
-      <span class="win">Pajak, STNK dan servis berkala</span>
-      <div class="big" id="k-tempo">—</div>
-      <div class="sub"><span id="k-telat">—</span> sudah lewat tanggal</div>
-    </div>
-  </section>
-
-  <section>
-    <h2>Perlu ditindaklanjuti: jatuh tempo dalam 30 hari</h2>
-    <p class="note">Diurutkan dari yang paling mendesak. Merah = sudah lewat, kuning = 7 hari atau kurang. Klik baris untuk memperbarui tanggal.</p>
-    <div class="tw"><table>
-      <thead><tr><th>Nopol</th><th>Kendaraan</th><th>Unit kerja</th><th>Kewajiban</th><th>Tanggal</th><th class="num">Sisa hari</th><th>Status</th></tr></thead>
-      <tbody id="tbl-tempo"></tbody>
-    </table></div>
-  </section>
-
-  <section>
-    <h2>Biaya pemeliharaan per bulan</h2>
-    <div class="legend"><span><span class="sw" style="background:var(--c0)"></span>Servis rutin</span><span><span class="sw" style="background:var(--c1)"></span>Perbaikan</span></div>
-    <div class="chart" id="ch-bulanan"></div>
-  </section>
-
-  <div class="grid2">
-    <section>
-      <h2>Total biaya per kendaraan, tahun berjalan</h2>
-      <p class="note">Kendaraan di urutan atas paling banyak menyerap biaya; kandidat evaluasi atau usulan penghapusan.</p>
-      <div class="chart" id="ch-kendaraan"></div>
-    </section>
-    <section>
-      <h2>Serapan anggaran per unit kerja</h2>
-      <p class="note">Batang abu-abu = pagu; isian = realisasi. Merah jika melebihi pagu.</p>
-      <div class="chart" id="ch-serapan"></div>
-    </section>
-  </div>
-
-  <section>
-    <h2>Daftar armada</h2>
-    <p class="note">Klik baris untuk mengubah status, kondisi, atau tanggal jatuh tempo.</p>
-    <div class="tw"><table>
-      <thead><tr><th>Nopol</th><th>Jenis</th><th>Merek / tipe</th><th class="num">Tahun</th><th>Unit kerja</th><th>Kondisi</th><th>Status</th></tr></thead>
-      <tbody id="tbl-armada"></tbody>
-    </table></div>
-  </section>
-
-  <section>
-    <h2>Riwayat servis terbaru</h2>
-    <p class="note">10 catatan terakhir.</p>
-    <div class="tw"><table>
-      <thead><tr><th>Tanggal</th><th>Nopol</th><th>Uraian</th><th>Jenis</th><th>Bengkel</th><th class="num">Biaya</th></tr></thead>
-      <tbody id="tbl-riwayat"></tbody>
-    </table></div>
-  </section>
-
-  <footer>Data dari Supabase, dimuat <span id="dimuat">—</span>. Perhitungan jatuh tempo memakai tanggal hari ini.</footer>
+  <div class="pagefoot">Data dari Supabase, dimuat <span id="dimuat">—</span>. Perhitungan jatuh tempo memakai tanggal hari ini.</div>
 </div>
 
 <!-- ============ DIALOG: CATAT SERVIS ============ -->
@@ -224,8 +468,8 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
     <label class="check"><input type="checkbox" id="s-selesai"> Kendaraan sudah selesai diperbaiki (ubah status jadi Siap Pakai)</label>
     <div class="msg" id="s-msg"></div>
     <div class="dlg-actions">
-      <button type="button" data-close>Batal</button>
-      <button class="primary" type="submit" id="s-btn">Simpan</button>
+      <button class="btn" type="button" data-close>Batal</button>
+      <button class="btn primary" type="submit" id="s-btn">Simpan</button>
     </div>
   </form>
 </dialog>
@@ -246,8 +490,8 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
     <label class="f">Servis berikutnya<input type="date" id="k-next"></label>
     <div class="msg" id="k-msg"></div>
     <div class="dlg-actions">
-      <button type="button" data-close>Batal</button>
-      <button class="primary" type="submit" id="k-btn">Simpan</button>
+      <button class="btn" type="button" data-close>Batal</button>
+      <button class="btn primary" type="submit" id="k-btn">Simpan</button>
     </div>
   </form>
 </dialog>
@@ -270,6 +514,7 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
   const pct = (v) => n1(v) + '%';
   const rpJt = (v) => 'Rp ' + n1(v / 1e6) + ' jt';
   const BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const BULAN_PANJANG = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   const parse = (s) => new Date(s + 'T00:00:00Z');
   const tgl = (d) => String(d.getUTCDate()).padStart(2, '0') + ' ' + BULAN[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
   const now = new Date();
@@ -279,6 +524,7 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
   const ym = (y, m) => y + '-' + String(m + 1).padStart(2, '0');
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const setText = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+  const setK = (k, v) => document.querySelectorAll('[data-k="' + k + '"]').forEach((el) => { el.textContent = v; });
   const clear = (el) => { while (el.firstChild) el.removeChild(el.firstChild); };
   const daysTo = (s) => s ? Math.round((Date.parse(s + 'T00:00:00Z') - TODAY) / 864e5) : null;
   const KEW = {pajak_tahunan: 'Pajak tahunan', stnk_5tahunan: 'STNK 5 tahunan', servis_berikutnya: 'Servis berkala'};
@@ -290,6 +536,7 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
     return m;
   };
   function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 3000); }
+  setText('tahun', String(YEAR));
 
   let DATA = null;
 
@@ -308,7 +555,7 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
   async function loadData() {
     $('app-error').hidden = true;
     try {
-      const sejak = (YEAR - 1) + '-12-01'; // cukup untuk tahun berjalan + pembanding bulan lalu
+      const sejak = (YEAR - 1) + '-12-01';
       const [kendaraan, servis, anggaran] = await Promise.all([
         fetchAll('kendaraan', (q) => q.order('nopol')),
         fetchAll('servis', (q) => q.gte('tanggal', sejak).order('tanggal', {ascending: false}).order('id', {ascending: false})),
@@ -348,20 +595,22 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
     };
   }
 
-  function jatuhTempo(k) {
+  function semuaJadwal(k) {
     const out = [];
     for (const r of k) for (const f of Object.keys(KEW)) {
-      const d = daysTo(r[f]);
-      if (d !== null && d <= 30) out.push({nopol: r.nopol, merek: r.merek_tipe, unit: r.unit_kerja, kew: KEW[f], field: f, tanggal: r[f], sisa: d});
+      if (!r[f]) continue;
+      out.push({nopol: r.nopol, merek: r.merek_tipe, unit: r.unit_kerja, kew: KEW[f], field: f, tanggal: r[f], sisa: daysTo(r[f])});
     }
-    return out.sort((a, b) => a.sisa - b.sisa);
+    return out;
   }
+  const jatuhTempo = (k) => semuaJadwal(k).filter((r) => r.sisa <= 30).sort((a, b) => a.sisa - b.sisa);
 
   function ringkasan({k, s, a}) {
     const sumMonth = (p) => s.filter((r) => r.tanggal.slice(0, 7) === p).reduce((x, r) => x + Number(r.biaya), 0);
     const bIni = sumMonth(ym(YEAR, MONTH));
     const bLalu = sumMonth(MONTH === 0 ? ym(YEAR - 1, 11) : ym(YEAR, MONTH - 1));
-    const realisasi = s.filter((r) => r.tanggal.slice(0, 4) === String(YEAR)).reduce((x, r) => x + Number(r.biaya), 0);
+    const tahunIni = s.filter((r) => r.tanggal.slice(0, 4) === String(YEAR));
+    const realisasi = tahunIni.reduce((x, r) => x + Number(r.biaya), 0);
     const pagu = a.reduce((x, r) => x + Number(r.pagu), 0);
     const tempo = jatuhTempo(k);
     return {
@@ -370,7 +619,8 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
       perbaikan: k.filter((r) => r.status === 'Dalam Perbaikan').length,
       bIni, bLalu, ubah: bLalu ? (bIni - bLalu) / bLalu * 100 : null,
       realisasi, pagu, serapan: pagu ? realisasi / pagu * 100 : null,
-      tempo: tempo.length, telat: tempo.filter((r) => r.sisa < 0).length
+      nservis: tahunIni.length, rata: tahunIni.length ? realisasi / tahunIni.length : 0,
+      tempo: tempo.length, telat: tempo.filter((r) => r.sisa < 0).length, tempoRows: tempo
     };
   }
 
@@ -401,63 +651,135 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
     }).sort((a, b) => b.persen - a.persen);
   }
 
-  // ---------- Rendering: text & tables ----------
+  // ---------- Rendering: numbers ----------
   function renderKpi(r) {
-    setText('t-siap', int(r.siap)); setText('t-total', int(r.total)); setText('t-tempo', int(r.tempo));
+    setK('siap', int(r.siap)); setK('total', int(r.total)); setK('perbaikan', int(r.perbaikan));
+    setK('tempo', int(r.tempo)); setK('telat', int(r.telat));
+    setK('biaya', rp(r.bIni)); setK('lalu', rp(r.bLalu));
+    setK('serapan', r.serapan == null ? '—' : pct(r.serapan));
+    setK('realisasi-jt', rpJt(r.realisasi)); setK('pagu-jt', rpJt(r.pagu));
+    setK('nservis', int(r.nservis)); setK('rata-jt', rpJt(r.rata));
     setText('t-arah', r.ubah == null ? 'tidak dapat dibandingkan' : (r.ubah >= 0 ? 'naik ' : 'turun ') + pct(Math.abs(r.ubah)));
-    setText('k-siap', int(r.siap)); setText('k-total', int(r.total)); setText('k-perbaikan', int(r.perbaikan));
-    setText('k-biaya', rp(r.bIni)); setText('k-lalu', rp(r.bLalu));
     const u = $('k-ubah'); u.classList.remove('up', 'down');
     if (r.ubah == null) u.textContent = '—';
     else { u.textContent = (r.ubah >= 0 ? '▲ ' : '▼ ') + pct(Math.abs(r.ubah)); u.classList.add(r.ubah > 0 ? 'up' : 'down'); }
-    setText('k-serapan', r.serapan == null ? '—' : pct(r.serapan));
-    setText('k-realisasi', rp(r.realisasi)); setText('k-pagu', rp(r.pagu));
-    setText('k-tempo', int(r.tempo)); setText('k-telat', int(r.telat));
+    // progress bars
+    const ready = r.total ? r.siap / r.total * 100 : 0;
+    const ps = $('prog-siap'); ps.querySelector('i').style.width = ready + '%'; ps.querySelector('b').style.left = Math.min(100, ready) + '%';
+    const pa = $('prog-anggaran'); const sp = r.serapan || 0;
+    pa.querySelector('i').style.width = Math.min(100, sp) + '%'; pa.classList.toggle('over', sp > 100);
+    // menu badge
+    const bd = $('badge-tempo');
+    bd.hidden = r.tempo === 0; bd.textContent = String(r.tempo);
+    bd.classList.toggle('bad', r.telat > 0);
   }
 
+  // ---------- Rendering: tables ----------
   const td = (tr, text, cls) => { const c = document.createElement('td'); c.textContent = text == null ? '' : text; if (cls) c.className = cls; tr.appendChild(c); };
   const pill = (tr, text, cls) => { const c = document.createElement('td'); const s = document.createElement('span'); s.className = 'pill ' + (cls || ''); s.textContent = text; c.appendChild(s); tr.appendChild(c); };
-  const emptyRow = (el, cols, text) => { const tr = document.createElement('tr'); const c = document.createElement('td'); c.colSpan = cols; c.className = 'empty'; c.textContent = text; tr.appendChild(c); el.appendChild(tr); };
+  const veh = (tr, nopol, merek) => { const c = document.createElement('td'); const b = document.createElement('b'); b.textContent = nopol; const sp = document.createElement('div'); sp.className = 'sub'; sp.textContent = merek || ''; c.append(b, sp); tr.appendChild(c); };
+  const emptyRow = (el, cols, text) => { const tr = document.createElement('tr'); const c = document.createElement('td'); c.colSpan = cols; c.className = 'empty'; c.style.padding = '14px'; c.textContent = text; tr.appendChild(c); el.appendChild(tr); };
 
   function renderTempo(rows) {
     const el = $('tbl-tempo'); clear(el);
-    if (!rows.length) return emptyRow(el, 7, 'Tidak ada kewajiban yang jatuh tempo dalam 30 hari.');
+    if (!rows.length) return emptyRow(el, 5, 'Tidak ada kewajiban yang jatuh tempo dalam 30 hari.');
     for (const r of rows) {
       const tr = document.createElement('tr'); tr.className = 'click';
       tr.addEventListener('click', () => openKendaraan(r.nopol));
-      td(tr, r.nopol); td(tr, r.merek); td(tr, r.unit); td(tr, r.kew); td(tr, tgl(parse(r.tanggal))); td(tr, String(r.sisa), 'num');
+      veh(tr, r.nopol, r.merek); td(tr, r.unit); td(tr, r.kew); td(tr, tgl(parse(r.tanggal)));
       if (r.sisa < 0) pill(tr, 'Terlambat ' + (-r.sisa) + ' hari', 'bad');
-      else if (r.sisa <= 7) pill(tr, 'Segera', 'warn');
-      else pill(tr, 'Terjadwal');
+      else if (r.sisa === 0) pill(tr, 'Hari ini', 'bad');
+      else pill(tr, r.sisa + ' hari lagi', r.sisa <= 7 ? 'warn' : '');
       el.appendChild(tr);
     }
   }
 
   function renderArmada(k) {
     const el = $('tbl-armada'); clear(el);
-    if (!k.length) return emptyRow(el, 7, 'Belum ada kendaraan.');
+    if (!k.length) return emptyRow(el, 6, 'Belum ada kendaraan.');
     for (const r of k) {
       const tr = document.createElement('tr'); tr.className = 'click';
       tr.addEventListener('click', () => openKendaraan(r.nopol));
-      td(tr, r.nopol); td(tr, r.jenis); td(tr, r.merek_tipe); td(tr, r.tahun == null ? '' : String(r.tahun), 'num'); td(tr, r.unit_kerja);
+      veh(tr, r.nopol, r.merek_tipe); td(tr, r.jenis); td(tr, r.tahun == null ? '' : String(r.tahun), 'num'); td(tr, r.unit_kerja);
       pill(tr, r.kondisi, r.kondisi === 'Baik' ? 'ok' : r.kondisi === 'Rusak Berat' ? 'bad' : 'warn');
       pill(tr, r.status, r.status === 'Siap Pakai' ? 'ok' : 'warn');
       el.appendChild(tr);
     }
   }
 
+  const terbaru = (s) => s.slice().sort((a, b) => b.tanggal.localeCompare(a.tanggal) || Number(b.id) - Number(a.id));
+
   function renderRiwayat(s) {
     const el = $('tbl-riwayat'); clear(el);
-    const rows = s.slice().sort((a, b) => b.tanggal.localeCompare(a.tanggal) || Number(b.id) - Number(a.id)).slice(0, 10);
-    if (!rows.length) return emptyRow(el, 6, 'Belum ada catatan servis.');
+    const rows = terbaru(s).slice(0, 20);
+    if (!rows.length) return emptyRow(el, 7, 'Belum ada catatan servis.');
     for (const r of rows) {
       const tr = document.createElement('tr');
-      td(tr, tgl(parse(r.tanggal))); td(tr, r.nopol); td(tr, r.uraian); td(tr, r.jenis); td(tr, r.bengkel); td(tr, rp(r.biaya), 'num');
+      td(tr, tgl(parse(r.tanggal))); td(tr, r.nopol); td(tr, r.uraian);
+      pill(tr, r.jenis, r.jenis === 'Rutin' ? '' : 'warn');
+      td(tr, r.bengkel); td(tr, r.km == null ? '' : int(r.km), 'num'); td(tr, rp(r.biaya), 'num');
       el.appendChild(tr);
     }
   }
 
-  // ---------- Rendering: charts ----------
+  function renderRecent(s) {
+    const el = $('recent'); clear(el);
+    const rows = terbaru(s).slice(0, 4);
+    if (!rows.length) { const d = document.createElement('div'); d.className = 'empty'; d.textContent = 'Belum ada catatan servis.'; el.appendChild(d); return; }
+    for (const r of rows) {
+      const it = document.createElement('div'); it.className = 'ri';
+      const ic = document.createElement('span'); ic.className = 'ic ' + (r.jenis === 'Rutin' ? 'r' : 'p'); ic.textContent = r.jenis === 'Rutin' ? 'RTN' : 'PRB';
+      const t = document.createElement('div'); t.className = 't';
+      const b = document.createElement('b'); b.textContent = r.uraian;
+      const sp = document.createElement('span'); sp.textContent = r.nopol + ' · ' + tgl(parse(r.tanggal));
+      t.append(b, sp);
+      const c = document.createElement('span'); c.className = 'c'; c.textContent = rpJt(r.biaya);
+      it.append(ic, t, c); el.appendChild(it);
+    }
+  }
+
+  // ---------- Calendar ----------
+  let calY = YEAR, calM = MONTH, calSel = null, calItems = [];
+  function renderCalendar(k) {
+    calItems = semuaJadwal(k);
+    const byDay = new Map();
+    calItems.forEach((it) => { if (!byDay.has(it.tanggal)) byDay.set(it.tanggal, []); byDay.get(it.tanggal).push(it); });
+    const g = $('cal-grid'); clear(g);
+    ['S','S','R','K','J','S','M'].forEach((w) => { const d = document.createElement('div'); d.className = 'wd'; d.textContent = w; g.appendChild(d); });
+    const first = new Date(Date.UTC(calY, calM, 1));
+    const offset = (first.getUTCDay() + 6) % 7; // Senin = 0
+    const start = Date.UTC(calY, calM, 1 - offset);
+    for (let i = 0; i < 42; i++) {
+      const dt = new Date(start + i * 864e5);
+      if (i >= 35 && dt.getUTCMonth() !== calM) break;
+      const key = dt.toISOString().slice(0, 10);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'd'; b.textContent = dt.getUTCDate();
+      if (dt.getUTCMonth() !== calM) b.classList.add('out');
+      if (dt.getTime() === TODAY) b.classList.add('today');
+      const items = byDay.get(key);
+      if (items) {
+        b.classList.add(items.some((x) => x.sisa < 0) ? 'late' : 'due');
+        b.title = items.map((x) => x.nopol + ' · ' + x.kew).join('\n');
+        b.addEventListener('click', () => { calSel = key; renderCalendar(k); });
+      } else b.tabIndex = -1;
+      if (calSel === key) b.classList.add('sel');
+      g.appendChild(b);
+    }
+    setText('cal-month', BULAN_PANJANG[calM] + ' ' + calY);
+    const det = $('cal-detail'); clear(det);
+    const sel = calSel && byDay.get(calSel);
+    if (sel) sel.forEach((x) => {
+      const it = document.createElement('div'); it.className = 'cal-item';
+      const a = document.createElement('span'); a.textContent = x.nopol + ' · ' + x.kew;
+      const b = document.createElement('b'); b.textContent = x.sisa < 0 ? 'Terlambat' : tgl(parse(x.tanggal));
+      if (x.sisa < 0) b.style.color = 'var(--bad)';
+      it.append(a, b); it.addEventListener('click', () => openKendaraan(x.nopol)); det.appendChild(it);
+    });
+  }
+  $('cal-prev').addEventListener('click', () => { calM--; if (calM < 0) { calM = 11; calY--; } calSel = null; render(); });
+  $('cal-next').addEventListener('click', () => { calM++; if (calM > 11) { calM = 0; calY++; } calSel = null; render(); });
+
+  // ---------- Charts ----------
   function tipFor(el) {
     const t = document.createElement('div'); t.className = 'tip'; t.hidden = true; el.appendChild(t);
     return {
@@ -466,89 +788,100 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
         lines.forEach(([a, b], i) => {
           const p = document.createElement('div');
           if (b !== undefined) { const s = document.createElement('span'); s.className = 'm'; s.textContent = a + ': '; p.appendChild(s); p.appendChild(document.createTextNode(b)); }
-          else { p.textContent = a; if (i === 0) p.style.fontWeight = '600'; }
+          else { p.textContent = a; if (i === 0) p.style.fontWeight = '700'; }
           t.appendChild(p);
         });
         t.hidden = false;
         const box = el.getBoundingClientRect();
-        let x = ev.clientX - box.left + 12; const y = ev.clientY - box.top + 12;
-        if (x + t.offsetWidth > box.width) x = Math.max(0, ev.clientX - box.left - t.offsetWidth - 12);
+        let x = ev.clientX - box.left + 14; const y = ev.clientY - box.top + 14;
+        if (x + t.offsetWidth > box.width) x = Math.max(0, ev.clientX - box.left - t.offsetWidth - 14);
         t.style.left = x + 'px'; t.style.top = y + 'px';
       },
       hide() { t.hidden = true; }
     };
   }
-
-  function emptyChart(el, text) { const d = document.createElement('div'); d.className = 'empty'; d.textContent = text; el.appendChild(d); }
+  const emptyChart = (el, text) => { const d = document.createElement('div'); d.className = 'empty'; d.textContent = text; el.appendChild(d); };
 
   function chartBulanan(rows) {
     const el = $('ch-bulanan'); clear(el);
     if (!rows.length) return emptyChart(el, 'Belum ada biaya tahun ini.');
-    const W = el.clientWidth || 600, H = 260, c0 = css('--c0'), c1 = css('--c1');
+    const W = el.clientWidth || 600, H = 280, c0 = css('--c0'), c1 = css('--c1');
     const svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('role', 'img').attr('aria-label', 'Grafik batang biaya pemeliharaan per bulan');
-    const y = d3.scaleLinear().domain([0, d3.max(rows, (r) => r.total) || 1]).nice().range([H - 24, 16]);
+    const y = d3.scaleLinear().domain([0, d3.max(rows, (r) => r.total) || 1]).nice().range([H - 26, 18]);
     const yAx = svg.append('g').call(d3.axisLeft(y).ticks(5).tickFormat((v) => v === 0 ? '0' : (v / 1e6) + ' jt').tickSize(0));
-    yAx.selectAll('text').style('fill', css('--muted')).style('font-size', '12px');
+    yAx.selectAll('text').style('fill', css('--muted')).style('font-size', '11.5px');
     let ml = 0; yAx.selectAll('text').each(function () { ml = Math.max(ml, this.getComputedTextLength()); });
-    ml = Math.ceil(ml) + 10;
+    ml = Math.ceil(ml) + 12;
     yAx.attr('transform', `translate(${ml},0)`).select('.domain').remove();
-    const x = d3.scaleBand().domain(rows.map((r) => r.bulan)).range([ml, W]).padding(0.25);
-    svg.insert('g', ':first-child').selectAll('line').data(y.ticks(5)).join('line').attr('x1', ml).attr('x2', W).attr('y1', y).attr('y2', y).style('stroke', css('--grid'));
-    const xa = svg.append('g').attr('transform', `translate(0,${H - 24})`).call(d3.axisBottom(x).tickFormat((b) => BULAN[parse(b + '-01').getUTCMonth()]).tickSize(0));
-    xa.select('.domain').remove(); xa.selectAll('text').attr('dy', '1em').style('fill', css('--muted')).style('font-size', '12px');
+    const x = d3.scaleBand().domain(rows.map((r) => r.bulan)).range([ml, W]).padding(0.32);
+    svg.insert('g', ':first-child').selectAll('line').data(y.ticks(5)).join('line').attr('x1', ml).attr('x2', W).attr('y1', y).attr('y2', y).style('stroke', css('--grid')).style('stroke-dasharray', '4 4');
+    const xa = svg.append('g').attr('transform', `translate(0,${H - 26})`).call(d3.axisBottom(x).tickFormat((b) => BULAN[parse(b + '-01').getUTCMonth()]).tickSize(0));
+    xa.select('.domain').remove(); xa.selectAll('text').attr('dy', '1.1em').style('fill', css('--muted')).style('font-size', '11.5px').style('font-weight', '600');
     const tip = tipFor(el);
+    const rx = Math.min(8, x.bandwidth() / 3);
     const g = svg.append('g').selectAll('g').data(rows).join('g');
-    g.append('rect').attr('x', (r) => x(r.bulan)).attr('width', x.bandwidth()).attr('y', (r) => y(r.rutin)).attr('height', (r) => y(0) - y(r.rutin)).style('fill', c0);
-    g.append('rect').attr('x', (r) => x(r.bulan)).attr('width', x.bandwidth()).attr('y', (r) => y(r.total)).attr('height', (r) => y(r.rutin) - y(r.total)).style('fill', c1);
-    if (x.bandwidth() > 34) g.append('text').attr('x', (r) => x(r.bulan) + x.bandwidth() / 2).attr('y', (r) => y(r.total) - 4).attr('text-anchor', 'middle')
-      .style('font-size', '11.5px').style('fill', css('--muted')).text((r) => n1(r.total / 1e6));
-    g.append('rect').attr('x', (r) => x(r.bulan)).attr('width', x.bandwidth()).attr('y', 0).attr('height', H - 24).style('fill', 'transparent')
-      .on('pointermove', (ev, r) => { const d = parse(r.bulan + '-01'); tip.show(ev, [[BULAN[d.getUTCMonth()] + ' ' + d.getUTCFullYear()], ['Rutin', rp(r.rutin)], ['Perbaikan', rp(r.perbaikan)], ['Total', rp(r.total)]]); })
+    g.append('rect').attr('x', (r) => x(r.bulan)).attr('width', x.bandwidth()).attr('y', (r) => y(r.total)).attr('height', (r) => y(0) - y(r.total)).attr('rx', rx).style('fill', c1);
+    g.append('rect').attr('x', (r) => x(r.bulan)).attr('width', x.bandwidth()).attr('y', (r) => y(r.rutin)).attr('height', (r) => y(0) - y(r.rutin)).attr('rx', rx).style('fill', c0);
+    if (x.bandwidth() > 28) g.append('text').attr('x', (r) => x(r.bulan) + x.bandwidth() / 2).attr('y', (r) => y(r.total) - 6).attr('text-anchor', 'middle')
+      .style('font-size', '11px').style('font-weight', '700').style('fill', css('--ink')).text((r) => n1(r.total / 1e6));
+    g.append('rect').attr('x', (r) => x(r.bulan) - x.step() * x.paddingInner() / 2).attr('width', x.step()).attr('y', 0).attr('height', H - 26).style('fill', 'transparent')
+      .on('pointermove', (ev, r) => { const d = parse(r.bulan + '-01'); tip.show(ev, [[BULAN_PANJANG[d.getUTCMonth()] + ' ' + d.getUTCFullYear()], ['Rutin', rp(r.rutin)], ['Perbaikan', rp(r.perbaikan)], ['Total', rp(r.total)]]); })
       .on('pointerleave', () => tip.hide());
   }
 
   function hbars(el, rows, opt) {
     clear(el);
     if (!rows.length) return emptyChart(el, 'Tidak ada data.');
-    const W = el.clientWidth || 400, rowH = 28, H = rows.length * rowH + 8;
+    const W = el.clientWidth || 400, rowH = 32, H = rows.length * rowH + 8;
     const svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('role', 'img').attr('aria-label', opt.aria);
-    const measure = (fn) => { let m = 0; const g = svg.append('g'); g.selectAll('text').data(rows).join('text').style('font-size', '12px').text(fn).each(function () { m = Math.max(m, this.getComputedTextLength()); }); g.remove(); return Math.ceil(m); };
-    const ml = measure(opt.label) + 10, mr = measure(opt.valueText) + 10;
+    const measure = (fn, w) => { let m = 0; const g = svg.append('g'); g.selectAll('text').data(rows).join('text').style('font-size', '12px').style('font-weight', w || 400).text(fn).each(function () { m = Math.max(m, this.getComputedTextLength()); }); g.remove(); return Math.ceil(m); };
+    const ml = measure(opt.label, 600) + 12, mr = measure(opt.valueText, 700) + 12;
     const x = d3.scaleLinear().domain([0, opt.max]).range([ml, Math.max(ml + 40, W - mr)]);
     const tip = tipFor(el);
+    const bh = rowH - 14;
     const g = svg.selectAll('g.r').data(rows).join('g').attr('class', 'r').attr('transform', (r, i) => `translate(0,${i * rowH + 4})`);
-    g.append('text').attr('x', ml - 8).attr('y', rowH / 2 - 2).attr('dy', '0.32em').attr('text-anchor', 'end').style('font-size', '12px').style('fill', css('--fg')).text(opt.label);
-    if (opt.track) g.append('rect').attr('x', ml).attr('y', 4).attr('height', rowH - 12).attr('width', (r) => x(opt.track(r)) - ml).style('fill', css('--track')).attr('rx', 2);
-    g.append('rect').attr('x', ml).attr('y', 4).attr('height', rowH - 12).attr('width', (r) => Math.max(0, x(Math.min(opt.value(r), opt.max)) - ml)).style('fill', opt.color).attr('rx', 2);
-    g.append('text').attr('x', (r) => x(opt.track ? Math.max(opt.track(r), opt.value(r)) : opt.value(r)) + 6).attr('y', rowH / 2 - 2).attr('dy', '0.32em')
-      .style('font-size', '12px').style('fill', css('--muted')).style('font-variant-numeric', 'tabular-nums').text(opt.valueText);
+    g.append('text').attr('x', ml - 10).attr('y', rowH / 2 - 3).attr('dy', '0.32em').attr('text-anchor', 'end').style('font-size', '12px').style('font-weight', 600).style('fill', css('--ink')).text(opt.label);
+    if (opt.track) g.append('rect').attr('x', ml).attr('y', 4).attr('height', bh).attr('width', (r) => x(opt.track(r)) - ml).attr('rx', bh / 2).style('fill', css('--track'));
+    g.append('rect').attr('x', ml).attr('y', 4).attr('height', bh).attr('width', (r) => Math.max(bh, x(Math.min(opt.value(r), opt.max)) - ml)).attr('rx', bh / 2).style('fill', opt.color);
+    g.append('text').attr('x', (r) => Math.max(ml + bh, x(opt.track ? Math.max(opt.track(r), opt.value(r)) : opt.value(r))) + 8).attr('y', rowH / 2 - 3).attr('dy', '0.32em')
+      .style('font-size', '12px').style('font-weight', 700).style('fill', css('--ink')).style('font-variant-numeric', 'tabular-nums').text(opt.valueText);
     g.append('rect').attr('width', W).attr('height', rowH).style('fill', 'transparent')
       .on('pointermove', (ev, r) => tip.show(ev, opt.tip(r))).on('pointerleave', () => tip.hide());
   }
 
+  // ---------- Render all ----------
   function render() {
     if (!DATA) return;
     const f = filtered($('f-unit').value);
-    renderKpi(ringkasan(f));
-    renderTempo(jatuhTempo(f.k));
+    const r = ringkasan(f);
+    renderKpi(r);
+    renderTempo(r.tempoRows);
     renderArmada(f.k);
     renderRiwayat(f.s);
-    chartBulanan(biayaBulanan(f.s));
-    const bk = biayaKendaraan(f.k, f.s);
-    hbars($('ch-kendaraan'), bk, {
-      aria: 'Grafik batang total biaya per kendaraan',
-      max: d3.max(bk, (r) => r.total) || 1,
-      label: (r) => r.nopol, value: (r) => r.total, valueText: (r) => rpJt(r.total), color: css('--c0'),
-      tip: (r) => [[r.nopol], ['Kendaraan', r.merek], ['Total biaya', rp(r.total)], ['Jumlah servis', int(r.n) + ' kali']]
-    });
-    const su = serapanUnit(f.a, DATA.servis);
-    hbars($('ch-serapan'), su, {
-      aria: 'Grafik batang serapan anggaran per unit kerja',
-      max: d3.max(su, (r) => Math.max(r.pagu, r.real)) || 1,
-      label: (r) => r.unit, value: (r) => r.real, track: (r) => r.pagu, valueText: (r) => pct(r.persen),
-      color: (r) => r.persen > 100 ? css('--bad') : css('--c0'),
-      tip: (r) => [[r.unit], ['Pagu', rp(r.pagu)], ['Realisasi', rp(r.real)], ['Serapan', pct(r.persen)]]
-    });
+    renderRecent(f.s);
+    renderCalendar(f.k);
+    const vis = (id) => !$(id).hidden;
+    if (vis('p-bulanan')) chartBulanan(biayaBulanan(f.s));
+    if (vis('p-kendaraan')) {
+      const bk = biayaKendaraan(f.k, f.s);
+      hbars($('ch-kendaraan'), bk, {
+        aria: 'Grafik batang total biaya per kendaraan',
+        max: d3.max(bk, (x) => x.total) || 1,
+        label: (x) => x.nopol, value: (x) => x.total, valueText: (x) => rpJt(x.total),
+        color: (x, i) => i < 3 ? css('--coral') : css('--purple'),
+        tip: (x) => [[x.nopol], ['Kendaraan', x.merek], ['Total biaya', rp(x.total)], ['Jumlah servis', int(x.n) + ' kali']]
+      });
+    }
+    if (vis('p-serapan')) {
+      const su = serapanUnit(f.a, DATA.servis);
+      hbars($('ch-serapan'), su, {
+        aria: 'Grafik batang serapan anggaran per unit kerja',
+        max: d3.max(su, (x) => Math.max(x.pagu, x.real)) || 1,
+        label: (x) => x.unit, value: (x) => x.real, track: (x) => x.pagu, valueText: (x) => pct(x.persen),
+        color: (x) => x.persen > 100 ? css('--bad') : css('--green'),
+        tip: (x) => [[x.unit], ['Pagu', rp(x.pagu)], ['Realisasi', rp(x.real)], ['Serapan', pct(x.persen)]]
+      });
+    }
   }
 
   // ---------- Forms ----------
@@ -566,13 +899,9 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
     ev.preventDefault();
     const nopol = $('s-nopol').value;
     const row = {
-      tanggal: $('s-tanggal').value,
-      nopol,
-      jenis: $('s-jenis').value,
-      uraian: $('s-uraian').value.trim(),
-      bengkel: $('s-bengkel').value.trim() || null,
-      km: $('s-km').value === '' ? null : Number($('s-km').value),
-      biaya: Number($('s-biaya').value)
+      tanggal: $('s-tanggal').value, nopol, jenis: $('s-jenis').value,
+      uraian: $('s-uraian').value.trim(), bengkel: $('s-bengkel').value.trim() || null,
+      km: $('s-km').value === '' ? null : Number($('s-km').value), biaya: Number($('s-biaya').value)
     };
     if (!row.uraian) { $('s-msg').textContent = 'Uraian pekerjaan wajib diisi.'; return; }
     $('s-btn').disabled = true; $('s-msg').textContent = '';
@@ -589,11 +918,8 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
       $('d-servis').close();
       toast('Catatan servis ' + nopol + ' tersimpan');
       await loadData();
-    } catch (e) {
-      $('s-msg').textContent = errText(e);
-    } finally {
-      $('s-btn').disabled = false;
-    }
+    } catch (e) { $('s-msg').textContent = errText(e); }
+    finally { $('s-btn').disabled = false; }
   });
 
   function fillKendaraanForm(nopol) {
@@ -615,11 +941,8 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
     ev.preventDefault();
     const nopol = $('k-nopol').value;
     const upd = {
-      status: $('k-status').value,
-      kondisi: $('k-kondisi').value,
-      pajak_tahunan: $('k-pajak').value || null,
-      stnk_5tahunan: $('k-stnk').value || null,
-      servis_berikutnya: $('k-next').value || null
+      status: $('k-status').value, kondisi: $('k-kondisi').value,
+      pajak_tahunan: $('k-pajak').value || null, stnk_5tahunan: $('k-stnk').value || null, servis_berikutnya: $('k-next').value || null
     };
     $('k-btn').disabled = true; $('k-msg').textContent = '';
     try {
@@ -629,20 +952,37 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
       $('d-kendaraan').close();
       toast('Data ' + nopol + ' diperbarui');
       await loadData();
-    } catch (e) {
-      $('k-msg').textContent = errText(e);
-    } finally {
-      $('k-btn').disabled = false;
-    }
+    } catch (e) { $('k-msg').textContent = errText(e); }
+    finally { $('k-btn').disabled = false; }
   });
+
+  // ---------- Menu ----------
+  const PANELS = [...document.querySelectorAll('.mi')].map((b) => b.dataset.panel);
+  function showPanel(id, push, scroll) {
+    if (!PANELS.includes(id)) id = PANELS[0];
+    document.querySelectorAll('.panel').forEach((p) => { p.hidden = p.id !== id; });
+    document.querySelectorAll('.mi').forEach((b) => {
+      const on = b.dataset.panel === id;
+      b.classList.toggle('active', on); b.setAttribute('aria-current', on ? 'page' : 'false');
+      if (on && window.innerWidth <= 860) { const m = b.parentElement; m.scrollTo({left: b.offsetLeft - (m.clientWidth - b.offsetWidth) / 2, behavior: 'smooth'}); }
+    });
+    if (push && location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+    render();
+    if (scroll) $(id).scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+  document.querySelectorAll('.mi').forEach((b) => b.addEventListener('click', () => showPanel(b.dataset.panel, true, window.innerWidth <= 1240)));
+  document.querySelectorAll('[data-goto]').forEach((b) => b.addEventListener('click', () => showPanel(b.dataset.goto, true, true)));
+  window.addEventListener('hashchange', () => showPanel(location.hash.slice(1), false, false));
 
   // ---------- Auth & views ----------
   let shown = null;
   async function showApp(session) {
     if (session) {
       $('v-login').hidden = true; $('v-app').hidden = false;
-      setText('u-email', session.user && session.user.email || '—');
-      if (shown !== session.user.id) { shown = session.user.id; await loadData(); }
+      const email = (session.user && session.user.email) || '';
+      setText('u-email', email || '—');
+      setText('u-avatar', (email[0] || '?').toUpperCase());
+      if (shown !== session.user.id) { shown = session.user.id; showPanel(location.hash.slice(1), false, false); await loadData(); }
     } else {
       shown = null; DATA = null;
       $('v-app').hidden = true; $('v-login').hidden = false;
@@ -659,12 +999,12 @@ dialog h2{margin:0;font-size:18px;font-weight:600}
   $('b-logout').addEventListener('click', () => sb.auth.signOut());
   $('b-refresh').addEventListener('click', async () => { await loadData(); toast('Data dimuat ulang'); });
   $('b-servis').addEventListener('click', openServis);
+  $('promo-servis').addEventListener('click', openServis);
   $('b-kendaraan').addEventListener('click', () => openKendaraan());
-  $('f-unit').addEventListener('change', render);
+  $('f-unit').addEventListener('change', () => { calSel = null; render(); });
 
   let w = window.innerWidth;
   window.addEventListener('resize', () => { if (Math.abs(window.innerWidth - w) > 20) { w = window.innerWidth; render(); } });
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
 
   sb.auth.onAuthStateChange((_event, session) => { setTimeout(() => showApp(session), 0); });
   sb.auth.getSession().then(({data}) => showApp(data.session));
