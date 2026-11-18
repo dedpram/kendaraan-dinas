@@ -389,6 +389,17 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
 }
 @media (max-width:560px){ .det{padding:16px} .act-btns .btn{flex:1} .photos.one .ph{aspect-ratio:4/3} }
 
+
+/* ---------- filter daftar armada ---------- */
+.fa-bar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.fa-f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fa-f span{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+.fa-f .sel{width:100%;font-size:13px;padding:8px 30px 8px 10px}
+.fa-f .sel.on{border-color:var(--violet);background-color:var(--violet-soft);color:var(--violet)}
+.fa-info{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:12.5px;color:var(--muted);min-height:24px}
+@media (max-width:1240px){ .fa-bar{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (max-width:560px){ .fa-bar{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
 @media (prefers-reduced-motion: no-preference){
   .panel{animation:fade .25s ease}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -602,6 +613,14 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
 
       <section class="card panel" id="p-armada" hidden>
         <div class="panel-head"><div><h2>Daftar armada</h2><p>Klik baris untuk mengubah status, kondisi, atau tanggal jatuh tempo.</p></div></div>
+        <div class="fa-bar" role="search" aria-label="Filter armada">
+          <label class="fa-f"><span>Jenis</span><select class="sel" id="fa-jenis"><option value="">Semua jenis</option></select></label>
+          <label class="fa-f"><span>Tahun</span><select class="sel" id="fa-tahun"><option value="">Semua tahun</option></select></label>
+          <label class="fa-f"><span>Unit kerja</span><select class="sel" id="fa-unit"><option value="">Semua unit</option></select></label>
+          <label class="fa-f"><span>Kondisi</span><select class="sel" id="fa-kondisi"><option value="">Semua kondisi</option><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select></label>
+          <label class="fa-f"><span>Status</span><select class="sel" id="fa-status"><option value="">Semua status</option><option>Siap Pakai</option><option>Dalam Perbaikan</option></select></label>
+        </div>
+        <div class="fa-info"><span id="fa-count">—</span><button type="button" class="linkhist" id="fa-reset" hidden>✕ Hapus filter</button></div>
         <div class="tw"><table>
           <thead><tr><th>Kendaraan</th><th>Jenis</th><th class="num">Tahun</th><th>Unit kerja</th><th>Kondisi</th><th>Status</th><th></th></tr></thead>
           <tbody id="tbl-armada"></tbody>
@@ -1085,9 +1104,29 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
     }
   }
 
-  function renderArmada(k) {
+  // Filter Daftar armada: Jenis, Tahun, Unit kerja, Kondisi, Status
+  const FA = ['fa-jenis', 'fa-tahun', 'fa-unit', 'fa-kondisi', 'fa-status'];
+  function fillSelect(id, values) {
+    const sel = $(id), cur = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    values.forEach((v) => sel.appendChild(new Option(String(v), String(v))));
+    sel.value = values.map(String).includes(cur) ? cur : '';
+  }
+  function renderArmada(all) {
     const el = $('tbl-armada'); clear(el);
-    if (!k.length) return emptyRow(el, 7, 'Belum ada kendaraan.');
+    const uniq = (f) => [...new Set(all.map(f).filter((v) => v != null && v !== ''))];
+    fillSelect('fa-jenis', uniq((r) => r.jenis).sort());
+    fillSelect('fa-tahun', uniq((r) => r.tahun).sort((a, b) => b - a));
+    fillSelect('fa-unit', uniq((r) => r.unit_kerja).sort());
+    const f = {jenis: $('fa-jenis').value, tahun: $('fa-tahun').value, unit: $('fa-unit').value, kondisi: $('fa-kondisi').value, status: $('fa-status').value};
+    const k = all.filter((r) => (!f.jenis || r.jenis === f.jenis) && (!f.tahun || String(r.tahun) === f.tahun) &&
+      (!f.unit || r.unit_kerja === f.unit) && (!f.kondisi || r.kondisi === f.kondisi) && (!f.status || r.status === f.status));
+    const aktif = FA.filter((id) => $(id).value).length;
+    FA.forEach((id) => $(id).classList.toggle('on', !!$(id).value));
+    setText('fa-count', aktif ? 'Menampilkan ' + int(k.length) + ' dari ' + int(all.length) + ' armada' : int(all.length) + ' armada');
+    $('fa-reset').hidden = !aktif;
+    if (!all.length) return emptyRow(el, 7, 'Belum ada kendaraan.');
+    if (!k.length) return emptyRow(el, 7, 'Tidak ada armada yang cocok dengan filter. Coba ubah atau hapus filter.');
     for (const r of k) {
       const tr = document.createElement('tr'); tr.className = 'click';
       tr.addEventListener('click', () => openKendaraan(r.nopol));
@@ -2020,6 +2059,8 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
   $('b-kendaraan').addEventListener('click', () => openKendaraan());
   $('f-unit').addEventListener('change', () => { calSel = null; render(); });
   $('r-nopol').addEventListener('change', () => render());
+  FA.forEach((id) => $(id).addEventListener('change', () => render()));
+  $('fa-reset').addEventListener('click', () => { FA.forEach((id) => { $(id).value = ''; }); render(); });
   $('r-jenis').addEventListener('change', () => render());
   $('rs-catat').addEventListener('click', () => openAjukan({nopol: $('r-nopol').value}));
 
