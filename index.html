@@ -351,6 +351,9 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
 .kv dt{color:var(--muted)}
 .kv dd{margin:0;font-weight:600;word-break:break-word}
 .det-photos{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.aju-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+.aju-foot .det-photos{margin-top:0}
+.aju-foot .spk-btn{margin:0 auto;padding:12px 20px;font-size:14px;box-shadow:0 8px 18px rgba(22,163,122,.25)}
 .det-photos button{border:0;padding:0;background:#f1f1fb;border-radius:12px;overflow:hidden;width:120px;aspect-ratio:4/3;cursor:pointer;position:relative}
 .det-photos img{width:100%;height:100%;object-fit:cover;display:block}
 .det-photos span{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px}
@@ -738,13 +741,13 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
   <div class="det">
     <div class="dlg-title">
       <div><span class="det-no" id="d-nomor">—</span><h2 id="d-judul">—</h2><p class="sub" id="d-sub">—</p></div>
-      <div class="det-top"><button class="btn primary" type="button" id="d-spk" hidden>⬇ Cetak SPK (PDF)</button><span class="pill" id="d-status">—</span><button class="btn" type="button" data-close>Tutup</button></div>
+      <div class="det-top"><span class="pill" id="d-status">—</span><button class="btn" type="button" data-close>Tutup</button></div>
     </div>
     <ol class="stepper" id="d-steps"></ol>
     <div class="alert soft" id="d-note" hidden></div>
 
     <div class="det-grid">
-      <section class="det-card"><h3>Pengajuan</h3><dl class="kv" id="d-aju"></dl><div class="det-photos" id="d-aju-foto"></div></section>
+      <section class="det-card"><h3>Pengajuan</h3><dl class="kv" id="d-aju"></dl><div class="aju-foot"><div class="det-photos" id="d-aju-foto"></div><button class="btn primary spk-btn" type="button" id="d-spk" hidden>⬇ Cetak SPK (PDF)</button></div></section>
       <section class="det-card" id="d-lap-card" hidden><h3>Pelaksanaan servis</h3><dl class="kv" id="d-lap"></dl><div class="det-photos" id="d-lap-foto"></div></section>
     </div>
 
