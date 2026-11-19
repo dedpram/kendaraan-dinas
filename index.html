@@ -500,8 +500,8 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
       </nav>
 
       <div class="left-foot">
-        <label for="f-unit">Tampilkan unit kerja</label>
-        <select class="sel" id="f-unit"><option value="">Semua unit kerja</option></select>
+        <label for="f-unit">Tampilkan pengguna</label>
+        <select class="sel" id="f-unit"><option value="">Semua pengguna</option></select>
       </div>
     </aside>
 
@@ -593,7 +593,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
       <section class="card panel" id="p-tempo" hidden>
         <div class="panel-head"><div><h2>Perlu ditindaklanjuti: jatuh tempo dalam 30 hari</h2><p>Diurutkan dari yang paling mendesak. Klik baris untuk memperbarui tanggal setelah dibayar atau diservis.</p></div></div>
         <div class="tw"><table>
-          <thead><tr><th>Kendaraan</th><th>Unit kerja</th><th>Kewajiban</th><th>Tanggal</th><th>Status</th></tr></thead>
+          <thead><tr><th>Kendaraan</th><th>Pengguna</th><th>Kewajiban</th><th>Tanggal</th><th>Status</th></tr></thead>
           <tbody id="tbl-tempo"></tbody>
         </table></div>
       </section>
@@ -610,7 +610,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
       </section>
 
       <section class="card panel" id="p-serapan" hidden>
-        <div class="panel-head"><div><h2>Serapan anggaran per unit kerja</h2><p>Batang abu-abu = pagu; isian = realisasi. Merah jika melebihi pagu.</p></div></div>
+        <div class="panel-head"><div><h2>Serapan anggaran per pengguna</h2><p>Batang abu-abu = pagu; isian = realisasi. Merah jika melebihi pagu.</p></div></div>
         <div class="chart" id="ch-serapan"></div>
       </section>
 
@@ -619,13 +619,13 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
         <div class="fa-bar" role="search" aria-label="Filter armada">
           <label class="fa-f"><span>Jenis</span><select class="sel" id="fa-jenis"><option value="">Semua jenis</option></select></label>
           <label class="fa-f"><span>Tahun</span><select class="sel" id="fa-tahun"><option value="">Semua tahun</option></select></label>
-          <label class="fa-f"><span>Unit kerja</span><select class="sel" id="fa-unit"><option value="">Semua unit</option></select></label>
+          <label class="fa-f"><span>Pengguna</span><select class="sel" id="fa-unit"><option value="">Semua pengguna</option></select></label>
           <label class="fa-f"><span>Kondisi</span><select class="sel" id="fa-kondisi"><option value="">Semua kondisi</option><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select></label>
           <label class="fa-f"><span>Status</span><select class="sel" id="fa-status"><option value="">Semua status</option><option>Siap Pakai</option><option>Dalam Perbaikan</option></select></label>
         </div>
         <div class="fa-info"><span id="fa-count">—</span><button type="button" class="linkhist" id="fa-reset" hidden>✕ Hapus filter</button></div>
         <div class="tw"><table>
-          <thead><tr><th>Kendaraan</th><th>Jenis</th><th class="num">Tahun</th><th>Unit kerja</th><th>Kondisi</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Kendaraan</th><th>Jenis</th><th class="num">Tahun</th><th>Pengguna</th><th>Kondisi</th><th>Status</th><th></th></tr></thead>
           <tbody id="tbl-armada"></tbody>
         </table></div>
       </section>
@@ -1107,7 +1107,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
     }
   }
 
-  // Filter Daftar armada: Jenis, Tahun, Unit kerja, Kondisi, Status
+  // Filter Daftar armada: Jenis, Tahun, Pengguna (unit_kerja), Kondisi, Status
   const FA = ['fa-jenis', 'fa-tahun', 'fa-unit', 'fa-kondisi', 'fa-status'];
   function fillSelect(id, values) {
     const sel = $(id), cur = sel.value;
@@ -1165,7 +1165,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
   }
 
   function renderRiwayat(s, k) {
-    // isi pilihan armada sesuai filter unit kerja
+    // isi pilihan armada sesuai filter pengguna (unit_kerja)
     const sel = $('r-nopol'); const want = sel.dataset.want || sel.value; delete sel.dataset.want;
     while (sel.options.length > 1) sel.remove(1);
     k.forEach((v) => sel.appendChild(new Option(v.nopol + ' · ' + (v.merek_tipe || ''), v.nopol)));
@@ -1581,7 +1581,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
     if (vis('p-serapan')) {
       const su = serapanUnit(f.a, DATA.servis);
       hbars($('ch-serapan'), su, {
-        aria: 'Grafik batang serapan anggaran per unit kerja',
+        aria: 'Grafik batang serapan anggaran per pengguna',
         max: d3.max(su, (x) => Math.max(x.pagu, x.real)) || 1,
         label: (x) => x.unit, value: (x) => x.real, track: (x) => x.pagu, valueText: (x) => pct(x.persen),
         color: (x) => x.persen > 100 ? css('--bad') : css('--green'),
@@ -1705,7 +1705,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
     // ---- data kendaraan ----
     const data = [
       ['Nomor Polisi', p.nopol], ['Merek / Tipe', v.merek_tipe || '-'], ['Jenis / Tahun', [v.jenis, v.tahun].filter(Boolean).join(' / ') || '-'],
-      ['Unit Kerja', p.unit_kerja || v.unit_kerja || '-'], ['Kilometer', p.km_pengajuan != null ? int(p.km_pengajuan) + ' km' : '-'],
+      ['Pengguna', p.unit_kerja || v.unit_kerja || '-'], ['Kilometer', p.km_pengajuan != null ? int(p.km_pengajuan) + ' km' : '-'],
       ['Jenis Servis', p.jenis], ['Nomor Pengajuan', p.nomor || '-']
     ];
     data.forEach(([k, val]) => { txt(k, L, y, R, 10); txt(':', L + 95, y, R, 10); y = paragraf([{t: val, f: B}], L + 102, y, CW - 102, 10, 11.5) + 13; });
