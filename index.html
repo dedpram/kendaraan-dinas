@@ -1604,6 +1604,13 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
     laman: 'www.setpp.kemenkeu.go.id',
     pembuka: 'Berdasarkan hasil pemeriksaan atau diagnosa kondisi Kendaraan Dinas Operasional Sekretariat Pengadilan Pajak, disampaikan hal hal sebagai berikut:'
   };
+  // Penanda tangan SPK dibuat TETAP sesuai template CETAK_SPK_KENDARAAN_DINAS.docx
+  const SPK_TTD = {
+    rt:  {nama: 'Mujiman',      nip: 'NIP 197205221999031001', nipTebal: false, eSign: true},   // Checker Petugas Subbag RT
+    drv: {nama: 'Muttasahal',   nip: '',                       nipTebal: false, eSign: false},  // Checker Leader Driver
+    kas: {nama: 'Dedi Pramono', nip: 'NIP 198502042007011004', nipTebal: true,  eSign: true},   // Kepala Subbagian Perlengkapan dan RT
+    ppk: {nama: 'Suparjo',      nip: 'NIP 197503241995021001', nipTebal: true,  eSign: true, nipGeser: 2.77} // Pejabat Pembuat Komitmen
+  };
   let SETTING = {};
   const spkNomor = (p) => p.nomor_spk ? 'SPK-' + p.nomor_spk + '/' + (SETTING.spk_kode || 'SP.1') + '/' + p.tahun_spk : '';
   const tglPanjang = (iso) => iso ? new Date(iso).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta'}) : '-';
@@ -1660,11 +1667,15 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
       return y - lh; // baseline baris terakhir
     }
     const halamanBaru = () => { page = doc.addPage([PW, PH]); return 60; };
+    // blok tanda tangan tetap: [Ditandatangani secara elektronik] / Nama (tebal) / NIP
+    const blokTtd = (t, x, y0) => {
+      if (t.eSign) txt('Ditandatangani secara elektronik', x, y0, R, 10, ABU);
+      txt(t.nama, x, y0 + 11.5, B, 10);
+      if (t.nip) txt(t.nip, x + (t.nipGeser || 0), y0 + 23, t.nipTebal ? B : R, 10);
+    };
 
     // ---- data ----
     const v = (DATA && DATA.kendaraan.find((x) => x.nopol === p.nopol)) || {};
-    const orang = (id) => PROFIL.get(id) || {};
-    const rt = orang(p.rt_oleh), drv = orang(p.diajukan_oleh), kas = orang(p.kasubbag_oleh);
     const nomor = spkNomor(p);
 
     // ---- kop surat ----
@@ -1709,10 +1720,8 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
     if (y + 120 > 800) y = halamanBaru();
     const C1 = 90.55, C2 = 359.85;
     txt('Checker Petugas Subbag RT,', C1, y, R, 10); txt('Tanggal, ' + tglPanjang(p.rt_pada), C1, y + 11.5, R, 10);
-    txt('Ditandatangani secara elektronik', C1, y + 89.7, R, 10, ABU);
-    txt(rt.nama || '-', C1, y + 101.2, B, 10); if (rt.nip) txt('NIP ' + rt.nip, C1, y + 112.7, R, 10);
     txt('Checker Leader Driver', C2, y, R, 10); txt('Tanggal, ' + tglPanjang(p.diajukan_pada), C2, y + 11.5, R, 10);
-    txt(drv.nama || '-', C2, y + 101.2, B, 10); if (drv.nip) txt('NIP ' + drv.nip, C2, y + 112.7, R, 10);
+    blokTtd(SPK_TTD.rt, C1, y + 89.7); blokTtd(SPK_TTD.drv, C2, y + 89.7);
     y += 112.7;
 
     // ---- perintah ----
@@ -1727,10 +1736,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
     const D1 = 90.55, D2 = 325.4;
     txt('Tanggal: ' + tglPanjang(p.kasubbag_pada), D1, y + 17.5, R, 10); txt('Tanggal: ' + tglPanjang(p.kasubbag_pada), D2, y + 17.5, R, 10);
     txt('Kepala Subbagian Perlengkapan dan RT', D1, y + 29, B, 10); txt('Pejabat Pembuat Komitmen', D2, y + 29, B, 10);
-    txt('Ditandatangani secara elektronik', D1, y + 110.65, R, 10, ABU); txt('Ditandatangani secara elektronik', D2, y + 110.65, R, 10, ABU);
-    txt(kas.nama || '-', D1, y + 122.15, B, 10); txt(SETTING.ppk_nama || '-', D2, y + 122.15, B, 10);
-    if (kas.nip) txt('NIP ' + kas.nip, D1, y + 133.65, B, 10);
-    if (SETTING.ppk_nip) txt('NIP ' + SETTING.ppk_nip, D2, y + 133.65, B, 10);
+    blokTtd(SPK_TTD.kas, D1, y + 110.65); blokTtd(SPK_TTD.ppk, D2, y + 110.65);
     y += 133.65;
 
     // ---- catatan ----
