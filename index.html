@@ -774,7 +774,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
       </div>
     </section>
 
-    <!-- Laporan pelaksanaan (Pengguna) -->
+    <!-- Laporan pelaksanaan (Pengemudi) -->
     <section class="act" id="act-lapor" hidden>
       <div class="dlg-title"><h3>Laporan pelaksanaan servis</h3><span class="req-note"><span class="req">*</span> wajib diisi</span></div>
       <div id="f-lapor">
@@ -844,7 +844,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
       <label class="f">Catatan <span class="sub">(wajib bila hasil dikembalikan)</span><textarea id="h-catatan" rows="2" maxlength="500"></textarea></label>
       <div class="msg" id="h-msg" role="alert"></div>
       <div class="act-btns">
-        <button type="button" class="btn warn" id="h-balik">Kembalikan ke pengguna</button>
+        <button type="button" class="btn warn" id="h-balik">Kembalikan ke pengemudi</button>
         <button type="button" class="btn primary" id="h-ok">Terima hasil &amp; selesaikan ✓</button>
       </div>
     </section>
@@ -1778,7 +1778,7 @@ dialog.wide{width:min(980px,calc(100vw - 24px))}
   // =====================================================================
   // ALUR PERSETUJUAN SERVIS
   // =====================================================================
-  const PERAN_LABEL = {pengguna: 'Pengguna', petugas_rt: 'Petugas RT', kasubbag: 'Kasubbag Perlengkapan & RT', admin: 'Admin'};
+  const PERAN_LABEL = {pengguna: 'Pengemudi', petugas_rt: 'Petugas RT', kasubbag: 'Kasubbag Perlengkapan & RT', admin: 'Admin'};
   const STATUS = {
     diajukan:     {label: 'Menunggu verifikasi RT', cls: 'info'},
     diverifikasi: {label: 'Menunggu persetujuan Kasubbag', cls: 'info'},
